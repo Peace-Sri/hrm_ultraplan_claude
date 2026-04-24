@@ -100,18 +100,18 @@ async function onLogout() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" class="w-80">
         <DropdownMenuLabel class="flex items-center justify-between">
-          <span>Notifications</span>
+          <span>{{ t('notifications.title') }}</span>
           <button
             v-if="notif.unreadCount > 0"
             class="text-xs text-primary hover:underline"
             @click="notif.markAllRead"
           >
-            Mark all read
+            {{ t('notifications.markAllRead') }}
           </button>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <div v-if="notif.latest.length === 0" class="p-6 text-center text-sm text-muted-foreground">
-          No notifications yet
+          {{ t('notifications.none') }}
         </div>
         <DropdownMenuItem
           v-for="n in notif.latest.slice(0, 10)"

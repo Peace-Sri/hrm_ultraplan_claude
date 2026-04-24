@@ -143,6 +143,7 @@ function buildOneEmployee(i: number, override?: Partial<Employee>): Employee {
     pvdRate: [0.03, 0.05, 0.07, 0.1, 0.15][rand(0, 4)],
     bankCode: pick(['SCB', 'KBANK', 'BBL', 'KTB', 'TTB', 'BAY'] as const),
     bankAccount: String(rand(1000000000, 9999999999)),
+    nationality: 'TH',
     taxAllowances: {
       hasSpouse: RNG() > 0.6,
       childrenBornBefore2018: rand(0, 2),
@@ -158,6 +159,81 @@ function buildOneEmployee(i: number, override?: Partial<Employee>): Employee {
     createdAt: now,
     updatedAt: now,
     ...override,
+  }
+}
+
+function buildForeignEmployee(
+  i: number,
+  nat: 'MM' | 'KH' | 'LA' | 'VN',
+  firstNameEn: string,
+  lastNameEn: string,
+  posId: string,
+  deptId: string,
+  baseSalaryBaht: number,
+): Employee {
+  const id = `EMP-${String(i + 1).padStart(5, '0')}` as Employee['id']
+  const today = new Date('2026-04-24')
+  const startDate = new Date(today.getTime() - rand(180, 1800) * 86400000)
+  const wpIssued = new Date(startDate.getTime() - rand(7, 30) * 86400000)
+  const wpExpiry = new Date(wpIssued.getTime() + 365 * 2 * 86400000)
+  const passExpiry = new Date(today.getTime() + rand(180, 1800) * 86400000)
+  const visaExpiry = new Date(wpExpiry.getTime())
+  return {
+    id,
+    employeeNo: `EMP${String(i + 1).padStart(5, '0')}`,
+    titleTh: 'นาย',
+    titleEn: 'Mr',
+    firstNameTh: firstNameEn, // phonetic only; no standard Thai transliteration
+    lastNameTh: lastNameEn,
+    firstNameEn,
+    lastNameEn,
+    nicknameTh: undefined,
+    nationality: nat,
+    // No thaiId for non-TH; foreign documents instead:
+    foreign: {
+      workPermitNo: `WP-${nat}-${String(rand(1000000, 9999999))}`,
+      workPermitExpiry: wpExpiry.toISOString().slice(0, 10),
+      passportNo: `${nat}${String(rand(10000000, 99999999))}`,
+      passportExpiry: passExpiry.toISOString().slice(0, 10),
+      visaType: 'Non-B',
+      visaExpiry: visaExpiry.toISOString().slice(0, 10),
+      entryDate: startDate.toISOString().slice(0, 10),
+    },
+    dob: new Date(1980 + rand(0, 20), rand(0, 11), rand(1, 28)).toISOString().slice(0, 10),
+    gender: 'male',
+    email: `${firstNameEn.toLowerCase()}.${lastNameEn.toLowerCase()}@acme.co.th`,
+    phone: `08${rand(1, 9)}-${String(rand(1000000, 9999999))}`,
+    address: {
+      addressLine: `${rand(1, 999)} ถนนสุขุมวิท`,
+      tambon: 'คลองเตย',
+      amphoe: 'คลองเตย',
+      changwat: 'กรุงเทพมหานคร',
+      zipCode: '10110',
+    },
+    departmentId: deptId as Employee['departmentId'],
+    positionId: posId as Employee['positionId'],
+    managerId: 'EMP-00002',
+    startDate: startDate.toISOString().slice(0, 10),
+    status: 'active',
+    baseSalary: toSatang(baseSalaryBaht),
+    monthlyAllowances: toSatang(0),
+    pvdRate: 0,
+    bankCode: 'KBANK',
+    bankAccount: String(rand(1000000000, 9999999999)),
+    taxAllowances: {
+      hasSpouse: false,
+      childrenBornBefore2018: 0,
+      childrenBornAfter2018: 0,
+      parents: 0,
+      disabled: 0,
+      lifeInsurance: 0,
+      healthInsurance: 0,
+      homeLoanInterest: 0,
+      rmf: 0,
+      ssf: 0,
+    },
+    createdAt: now,
+    updatedAt: now,
   }
 }
 
@@ -275,11 +351,16 @@ export function buildEmployees(count = 60): Employee[] {
     }),
   )
   // Generate the rest with some linking to manager #2 (Orathai) and #3 (Pimjai)
-  for (let i = 5; i < count; i++) {
+  for (let i = 5; i < count - 4; i++) {
     const managerId =
       i % 2 === 0 ? ('EMP-00002' as Employee['id']) : ('EMP-00003' as Employee['id'])
     emps.push(buildOneEmployee(i, { managerId }))
   }
+  // 4 foreign workers (various nationalities) at the end
+  emps.push(buildForeignEmployee(count - 4, 'MM', 'Aung', 'Myint', 'POS-PRD-WRK', 'DEPT-PRD', 16000))
+  emps.push(buildForeignEmployee(count - 3, 'MM', 'Kyaw', 'Htet', 'POS-PRD-WRK', 'DEPT-PRD', 16500))
+  emps.push(buildForeignEmployee(count - 2, 'KH', 'Dara', 'Chan', 'POS-OPS-STF', 'DEPT-OPS', 18000))
+  emps.push(buildForeignEmployee(count - 1, 'LA', 'Somsak', 'Phetsalath', 'POS-OPS-STF', 'DEPT-OPS', 18500))
   return emps
 }
 

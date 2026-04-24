@@ -73,6 +73,30 @@ function onDelete() {
     toast.error(err instanceof Error ? err.message : String(err))
   }
 }
+
+const NAT_LABELS: Record<string, string> = {
+  TH: 'ไทย 🇹🇭',
+  MM: 'เมียนมา 🇲🇲',
+  KH: 'กัมพูชา 🇰🇭',
+  LA: 'ลาว 🇱🇦',
+  VN: 'เวียดนาม 🇻🇳',
+  OTHER: 'อื่นๆ',
+}
+function natLabel(n: string) {
+  return NAT_LABELS[n] ?? n
+}
+
+function genderLabel(g: string) {
+  return g === 'male' ? 'ชาย' : g === 'female' ? 'หญิง' : 'อื่นๆ'
+}
+
+function expiryClass(dateStr: string): string {
+  const days = (new Date(dateStr).getTime() - Date.now()) / 86400000
+  if (days < 0) return 'text-destructive font-semibold'
+  if (days < 30) return 'text-destructive'
+  if (days < 90) return 'text-orange-600'
+  return 'text-muted-foreground'
+}
 </script>
 
 <template>
@@ -139,19 +163,56 @@ function onDelete() {
 
     <Tabs default-value="personal">
       <TabsList>
-        <TabsTrigger value="personal">Personal</TabsTrigger>
-        <TabsTrigger value="work">Work</TabsTrigger>
-        <TabsTrigger value="compensation">Compensation</TabsTrigger>
-        <TabsTrigger value="history">History</TabsTrigger>
+        <TabsTrigger value="personal">{{ t('employee.tabs.personal') }}</TabsTrigger>
+        <TabsTrigger value="work">{{ t('employee.tabs.work') }}</TabsTrigger>
+        <TabsTrigger value="compensation">{{ t('employee.tabs.compensation') }}</TabsTrigger>
+        <TabsTrigger value="history">{{ t('employee.tabs.history') }}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="personal">
         <Card>
           <CardContent class="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><div class="text-xs text-muted-foreground">Thai ID</div><div class="font-mono">{{ formatThaiID(emp.thaiId) }}</div></div>
-            <div><div class="text-xs text-muted-foreground">Date of Birth</div><div>{{ date(emp.dob) }}</div></div>
-            <div><div class="text-xs text-muted-foreground">Gender</div><div class="capitalize">{{ emp.gender }}</div></div>
-            <div class="md:col-span-2"><div class="text-xs text-muted-foreground flex items-center gap-1"><MapPin class="h-3 w-3" />Address</div>
+            <div>
+              <div class="text-xs text-muted-foreground">สัญชาติ</div>
+              <div class="flex items-center gap-2">
+                <Badge>{{ natLabel(emp.nationality) }}</Badge>
+              </div>
+            </div>
+            <div v-if="emp.nationality === 'TH' && emp.thaiId">
+              <div class="text-xs text-muted-foreground">เลขบัตรประชาชน</div>
+              <div class="font-mono">{{ formatThaiID(emp.thaiId) }}</div>
+            </div>
+            <template v-else-if="emp.foreign">
+              <div>
+                <div class="text-xs text-muted-foreground">บัตรชมพู (Work Permit)</div>
+                <div class="font-mono">{{ emp.foreign.workPermitNo }}</div>
+                <div v-if="emp.foreign.workPermitExpiry" class="text-xs" :class="expiryClass(emp.foreign.workPermitExpiry)">
+                  หมดอายุ: {{ date(emp.foreign.workPermitExpiry) }}
+                </div>
+              </div>
+              <div>
+                <div class="text-xs text-muted-foreground">หนังสือเดินทาง (Passport)</div>
+                <div class="font-mono">{{ emp.foreign.passportNo }}</div>
+                <div v-if="emp.foreign.passportExpiry" class="text-xs" :class="expiryClass(emp.foreign.passportExpiry)">
+                  หมดอายุ: {{ date(emp.foreign.passportExpiry) }}
+                </div>
+              </div>
+              <div v-if="emp.foreign.visaType">
+                <div class="text-xs text-muted-foreground">วีซ่า (Visa)</div>
+                <div>{{ emp.foreign.visaType }}</div>
+                <div v-if="emp.foreign.visaExpiry" class="text-xs" :class="expiryClass(emp.foreign.visaExpiry)">
+                  หมดอายุ: {{ date(emp.foreign.visaExpiry) }}
+                </div>
+              </div>
+              <div v-if="emp.foreign.entryDate">
+                <div class="text-xs text-muted-foreground">วันเข้าประเทศ</div>
+                <div>{{ date(emp.foreign.entryDate) }}</div>
+              </div>
+            </template>
+            <div><div class="text-xs text-muted-foreground">วันเกิด</div><div>{{ date(emp.dob) }}</div></div>
+            <div><div class="text-xs text-muted-foreground">เพศ</div><div>{{ genderLabel(emp.gender) }}</div></div>
+            <div class="md:col-span-2">
+              <div class="text-xs text-muted-foreground flex items-center gap-1"><MapPin class="h-3 w-3" />ที่อยู่</div>
               <div>{{ emp.address.addressLine }}, {{ emp.address.tambon }}, {{ emp.address.amphoe }}, {{ emp.address.changwat }} {{ emp.address.zipCode }}</div>
             </div>
           </CardContent>
@@ -161,10 +222,10 @@ function onDelete() {
       <TabsContent value="work">
         <Card>
           <CardContent class="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><div class="text-xs text-muted-foreground">Department</div><div>{{ employee.getDepartmentName(emp.departmentId, app.locale) }}</div></div>
-            <div><div class="text-xs text-muted-foreground">Position</div><div>{{ employee.getPositionName(emp.positionId, app.locale) }}</div></div>
-            <div><div class="text-xs text-muted-foreground flex items-center gap-1"><Calendar class="h-3 w-3" />Start Date</div><div>{{ date(emp.startDate) }}</div></div>
-            <div v-if="emp.probationEndDate"><div class="text-xs text-muted-foreground">Probation End</div><div>{{ date(emp.probationEndDate) }}</div></div>
+            <div><div class="text-xs text-muted-foreground">{{ t('employee.fields.department') }}</div><div>{{ employee.getDepartmentName(emp.departmentId, app.locale) }}</div></div>
+            <div><div class="text-xs text-muted-foreground">{{ t('employee.fields.position') }}</div><div>{{ employee.getPositionName(emp.positionId, app.locale) }}</div></div>
+            <div><div class="text-xs text-muted-foreground flex items-center gap-1"><Calendar class="h-3 w-3" />{{ t('employee.fields.startDate') }}</div><div>{{ date(emp.startDate) }}</div></div>
+            <div v-if="emp.probationEndDate"><div class="text-xs text-muted-foreground">{{ t('employee.fields.probationEnd') }}</div><div>{{ date(emp.probationEndDate) }}</div></div>
           </CardContent>
         </Card>
       </TabsContent>
@@ -172,48 +233,48 @@ function onDelete() {
       <TabsContent value="compensation">
         <Card>
           <CardContent class="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><div class="text-xs text-muted-foreground">Base Salary</div><div class="font-semibold">{{ thb(emp.baseSalary) }}</div></div>
-            <div><div class="text-xs text-muted-foreground">Monthly Allowances</div><div>{{ thb(emp.monthlyAllowances) }}</div></div>
-            <div><div class="text-xs text-muted-foreground">PVD Rate</div><div>{{ (emp.pvdRate * 100).toFixed(1) }}%</div></div>
-            <div><div class="text-xs text-muted-foreground flex items-center gap-1"><CreditCard class="h-3 w-3" />Bank</div><div>{{ emp.bankCode }} — {{ emp.bankAccount }}</div></div>
+            <div><div class="text-xs text-muted-foreground">{{ t('employee.fields.baseSalary') }}</div><div class="font-semibold">{{ thb(emp.baseSalary) }}</div></div>
+            <div><div class="text-xs text-muted-foreground">{{ t('employee.fields.allowances') }}</div><div>{{ thb(emp.monthlyAllowances) }}</div></div>
+            <div><div class="text-xs text-muted-foreground">{{ t('employee.fields.pvdRate') }}</div><div>{{ (emp.pvdRate * 100).toFixed(1) }}%</div></div>
+            <div><div class="text-xs text-muted-foreground flex items-center gap-1"><CreditCard class="h-3 w-3" />{{ t('employee.fields.bank') }}</div><div>{{ emp.bankCode }} — {{ emp.bankAccount }}</div></div>
           </CardContent>
         </Card>
       </TabsContent>
 
       <TabsContent value="history">
         <Card>
-          <CardHeader><CardTitle>Recent Attendance</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{{ t('employee.detail.recentAttendance') }}</CardTitle></CardHeader>
           <CardContent>
             <ul class="space-y-1 text-sm">
               <li v-for="a in attendanceRecords" :key="a.id" class="flex justify-between">
                 <span>{{ date(a.date) }}</span>
-                <Badge :variant="a.status === 'present' ? 'default' : 'secondary'" class="capitalize">{{ a.status }}</Badge>
+                <Badge :variant="a.status === 'present' ? 'default' : 'secondary'">{{ t(`attendance.recordStatus.${a.status}`) }}</Badge>
               </li>
-              <li v-if="attendanceRecords.length === 0" class="text-muted-foreground">No records</li>
+              <li v-if="attendanceRecords.length === 0" class="text-muted-foreground">{{ t('employee.detail.noRecords') }}</li>
             </ul>
           </CardContent>
         </Card>
         <Card class="mt-4">
-          <CardHeader><CardTitle>Leave History</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{{ t('employee.detail.leaveHistory') }}</CardTitle></CardHeader>
           <CardContent>
             <ul class="space-y-1 text-sm">
               <li v-for="l in leaveHistory" :key="l.id" class="flex justify-between">
-                <span>{{ l.leaveTypeKey }} — {{ date(l.startDate) }} ({{ l.totalDays }}d)</span>
-                <Badge :variant="l.status === 'approved' ? 'default' : l.status === 'pending' ? 'outline' : 'secondary'">{{ l.status }}</Badge>
+                <span>{{ t(`leave.types.${l.leaveTypeKey}`) }} — {{ date(l.startDate) }} ({{ l.totalDays }}{{ t('leave.days').slice(0, 1) }})</span>
+                <Badge :variant="l.status === 'approved' ? 'default' : l.status === 'pending' ? 'outline' : 'secondary'">{{ t(`leave.status.${l.status}`) }}</Badge>
               </li>
-              <li v-if="leaveHistory.length === 0" class="text-muted-foreground">No leave records</li>
+              <li v-if="leaveHistory.length === 0" class="text-muted-foreground">{{ t('employee.detail.noLeaves') }}</li>
             </ul>
           </CardContent>
         </Card>
         <Card class="mt-4">
-          <CardHeader><CardTitle>Payslip History</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{{ t('employee.detail.payslipHistory') }}</CardTitle></CardHeader>
           <CardContent>
             <ul class="space-y-1 text-sm">
               <li v-for="p in payslipHistory" :key="p.id" class="flex justify-between">
                 <span>{{ date(p.period, 'MMM yyyy') }}</span>
                 <span class="font-semibold">{{ thb(p.netPay) }}</span>
               </li>
-              <li v-if="payslipHistory.length === 0" class="text-muted-foreground">No payslips</li>
+              <li v-if="payslipHistory.length === 0" class="text-muted-foreground">{{ t('employee.detail.noPayslips') }}</li>
             </ul>
           </CardContent>
         </Card>

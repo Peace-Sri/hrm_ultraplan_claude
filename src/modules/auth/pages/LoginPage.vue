@@ -126,7 +126,7 @@ function toggleTheme() {
           </form>
 
           <p class="text-xs text-center text-muted-foreground">
-            POC — any non-empty password works for seed users.
+            {{ t('auth.pocNote') }}
           </p>
         </CardContent>
       </Card>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Clock, MapPin, LogIn, LogOut, AlertCircle } from 'lucide-vue-next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,7 @@ import { useLocale } from '@/composables/useLocale'
 import type { AttendanceMethod } from '@/types/attendance'
 import { toast } from 'vue-sonner'
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const attendance = useAttendanceStore()
 const notif = useNotificationStore()
@@ -57,7 +59,7 @@ async function requestGPS(): Promise<{ lat: number; lng: number; distance: numbe
   if (method.value !== 'gps') return null
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
-      gpsError.value = 'Geolocation not supported; using mock location.'
+      gpsError.value = t('attendance.gpsUnsupported')
       resolve({ lat: OFFICE_LAT, lng: OFFICE_LNG, distance: 0 })
       return
     }
@@ -70,7 +72,7 @@ async function requestGPS(): Promise<{ lat: number; lng: number; distance: numbe
         resolve(position.value)
       },
       (err) => {
-        gpsError.value = `GPS denied (${err.message}); using mock location.`
+        gpsError.value = t('attendance.gpsDenied', { msg: err.message })
         const fallback = { lat: OFFICE_LAT, lng: OFFICE_LNG, distance: 0 }
         position.value = fallback
         resolve(fallback)
@@ -106,7 +108,7 @@ async function onClockIn() {
       bodyEn: fmtTime(rec.clockInAt!),
       link: '/attendance/my',
     })
-    toast.success(`Clocked in at ${fmtTime(rec.clockInAt!)}`)
+    toast.success(t('attendance.clockedInAt', { time: fmtTime(rec.clockInAt!) }))
   } catch (err) {
     toast.error(err instanceof Error ? err.message : String(err))
   }
@@ -125,7 +127,7 @@ async function onClockOut() {
         bodyTh: fmtTime(rec.clockOutAt),
         bodyEn: fmtTime(rec.clockOutAt),
       })
-      toast.success(`Clocked out at ${fmtTime(rec.clockOutAt)}`)
+      toast.success(t('attendance.clockedOutAt', { time: fmtTime(rec.clockOutAt) }))
     }
   } catch (err) {
     toast.error(err instanceof Error ? err.message : String(err))
@@ -139,15 +141,15 @@ const stateClass = computed(() => ({
 }[state.value]))
 
 const stateLabel = computed(() => ({
-  not_clocked: 'Not Clocked In',
-  working: 'Working',
-  done: 'Done for Today',
+  not_clocked: t('attendance.status.notClocked'),
+  working: t('attendance.status.working'),
+  done: t('attendance.status.done'),
 }[state.value]))
 </script>
 
 <template>
   <div>
-    <PageHeader title="Clock In / Out" :description="auth.currentEmployee ? `${auth.currentEmployee.firstNameTh} ${auth.currentEmployee.lastNameTh}` : ''" />
+    <PageHeader :title="t('attendance.clockInOut')" :description="auth.currentEmployee ? `${auth.currentEmployee.firstNameTh} ${auth.currentEmployee.lastNameTh}` : ''" />
 
     <div class="max-w-2xl">
       <Card :class="stateClass">
@@ -166,14 +168,14 @@ const stateLabel = computed(() => ({
           </div>
 
           <div class="space-y-2">
-            <label class="text-sm font-medium">Check-in Method</label>
+            <label class="text-sm font-medium">{{ t('attendance.method') }}</label>
             <Select v-model="method">
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="gps">GPS</SelectItem>
-                <SelectItem value="wifi">Wi-Fi</SelectItem>
-                <SelectItem value="face_mock">Face Recognition (demo)</SelectItem>
-                <SelectItem value="fingerprint_mock">Fingerprint (demo)</SelectItem>
+                <SelectItem value="gps">{{ t('attendance.methodGps') }}</SelectItem>
+                <SelectItem value="wifi">{{ t('attendance.methodWifi') }}</SelectItem>
+                <SelectItem value="face_mock">{{ t('attendance.methodFace') }}</SelectItem>
+                <SelectItem value="fingerprint_mock">{{ t('attendance.methodFingerprint') }}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -183,7 +185,7 @@ const stateLabel = computed(() => ({
             <div>
               <div class="font-mono text-xs">{{ position.lat.toFixed(5) }}, {{ position.lng.toFixed(5) }}</div>
               <div :class="position.distance < 500 ? 'text-green-600' : 'text-orange-600'">
-                {{ position.distance < 1000 ? `${position.distance.toFixed(0)} m` : `${(position.distance / 1000).toFixed(2)} km` }} from office
+                {{ position.distance < 1000 ? `${position.distance.toFixed(0)} m` : `${(position.distance / 1000).toFixed(2)} km` }} {{ t('attendance.fromOffice') }}
               </div>
             </div>
           </div>
@@ -201,7 +203,7 @@ const stateLabel = computed(() => ({
               @click="onClockIn"
             >
               <LogIn class="mr-2 h-5 w-5" />
-              Clock In
+              {{ t('attendance.clockIn') }}
             </Button>
             <Button
               v-if="state === 'working'"
@@ -211,10 +213,10 @@ const stateLabel = computed(() => ({
               @click="onClockOut"
             >
               <LogOut class="mr-2 h-5 w-5" />
-              Clock Out
+              {{ t('attendance.clockOut') }}
             </Button>
             <div v-if="state === 'done'" class="flex-1 text-center py-4 text-muted-foreground">
-              ✓ You've completed your workday
+              {{ t('attendance.completed') }}
             </div>
           </div>
         </CardContent>
@@ -223,25 +225,25 @@ const stateLabel = computed(() => ({
       <!-- Today's record summary -->
       <Card v-if="myToday" class="mt-4">
         <CardHeader>
-          <CardTitle class="text-base">Today's Record</CardTitle>
+          <CardTitle class="text-base">{{ t('attendance.todayRecord') }}</CardTitle>
         </CardHeader>
         <CardContent class="space-y-2 text-sm">
           <div class="flex justify-between">
-            <span class="text-muted-foreground">Clock In</span>
+            <span class="text-muted-foreground">{{ t('attendance.clockedIn') }}</span>
             <span class="font-mono">{{ myToday.clockInAt ? fmtTime(myToday.clockInAt) : '—' }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-muted-foreground">Clock Out</span>
+            <span class="text-muted-foreground">{{ t('attendance.clockedOut') }}</span>
             <span class="font-mono">{{ myToday.clockOutAt ? fmtTime(myToday.clockOutAt) : '—' }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-muted-foreground">Late Minutes</span>
-            <Badge v-if="myToday.lateMinutes > 0" variant="destructive">{{ myToday.lateMinutes }} min</Badge>
+            <span class="text-muted-foreground">{{ t('attendance.lateMinutes') }}</span>
+            <Badge v-if="myToday.lateMinutes > 0" variant="destructive">{{ myToday.lateMinutes }} นาที</Badge>
             <span v-else>0</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-muted-foreground">OT Minutes</span>
-            <span>{{ myToday.otWeekdayMinutes }} min (1.5×)</span>
+            <span class="text-muted-foreground">{{ t('attendance.otMinutes') }}</span>
+            <span>{{ myToday.otWeekdayMinutes }} นาที (1.5×)</span>
           </div>
         </CardContent>
       </Card>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { Check, X, Inbox as InboxIcon } from 'lucide-vue-next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,6 +25,7 @@ import { useLocale } from '@/composables/useLocale'
 import { toast } from 'vue-sonner'
 import type { ID } from '@/types/common'
 
+const { t } = useI18n()
 const router = useRouter()
 const leave = useLeaveStore()
 const auth = useAuthStore()
@@ -68,20 +70,20 @@ function onReject(id: ID<'LVR'>) {
 
 <template>
   <div>
-    <PageHeader title="Approval Inbox" :description="`${pendingLeaves.length} pending across all categories`" />
+    <PageHeader :title="t('approval.inbox')" :description="`${pendingLeaves.length} ${t('leave.pending')}`" />
 
     <Tabs v-model="activeTab">
       <TabsList>
         <TabsTrigger value="all">
-          All
+          {{ t('approval.tabAll') }}
           <Badge variant="secondary" class="ml-2">{{ pendingLeaves.length }}</Badge>
         </TabsTrigger>
         <TabsTrigger value="leave">
-          Leave
+          {{ t('approval.tabLeave') }}
           <Badge variant="secondary" class="ml-2">{{ pendingLeaves.length }}</Badge>
         </TabsTrigger>
         <TabsTrigger value="attendance">
-          Attendance
+          {{ t('approval.tabAttendance') }}
           <Badge variant="secondary" class="ml-2">0</Badge>
         </TabsTrigger>
       </TabsList>
@@ -91,26 +93,26 @@ function onReject(id: ID<'LVR'>) {
           <CardHeader>
             <CardTitle class="flex items-center gap-2">
               <InboxIcon class="h-4 w-4" />
-              Pending Items
+              {{ t('approval.pendingItems') }}
             </CardTitle>
           </CardHeader>
           <CardContent class="pt-0">
             <Table v-if="pendingLeaves.length > 0">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Summary</TableHead>
-                  <TableHead>Submitted</TableHead>
-                  <TableHead class="text-right">Actions</TableHead>
+                  <TableHead>{{ t('leave.table.type') }}</TableHead>
+                  <TableHead>{{ t('leave.table.employee') }}</TableHead>
+                  <TableHead>{{ t('leave.table.summary') }}</TableHead>
+                  <TableHead>{{ t('leave.table.submittedAt') }}</TableHead>
+                  <TableHead class="text-right">{{ t('common.actions') }}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 <TableRow v-for="r in pendingLeaves" :key="r.id">
-                  <TableCell><Badge>Leave</Badge></TableCell>
+                  <TableCell><Badge>{{ t('approval.kind.leave') }}</Badge></TableCell>
                   <TableCell>{{ nameOf(r.employeeId) }}</TableCell>
                   <TableCell class="max-w-xs">
-                    {{ r.leaveTypeKey }} — {{ r.totalDays }}d
+                    {{ t(`leave.types.${r.leaveTypeKey}`) }} — {{ r.totalDays }} {{ t('leave.days') }}
                     <span class="text-muted-foreground text-xs">({{ fmtDate(r.startDate) }})</span>
                   </TableCell>
                   <TableCell>{{ fmtDate(r.submittedAt, 'd MMM') }}</TableCell>
@@ -127,7 +129,7 @@ function onReject(id: ID<'LVR'>) {
                 </TableRow>
               </TableBody>
             </Table>
-            <EmptyState v-else title="All caught up!" description="No pending approvals." />
+            <EmptyState v-else :title="t('leave.allCaughtUp')" :description="t('leave.noPending')" />
           </CardContent>
         </Card>
       </TabsContent>
@@ -135,10 +137,10 @@ function onReject(id: ID<'LVR'>) {
       <TabsContent value="leave">
         <Card class="mt-4">
           <CardHeader>
-            <CardTitle>Leave Requests</CardTitle>
+            <CardTitle>{{ t('leave.approvals') }}</CardTitle>
           </CardHeader>
           <CardContent>
-            <Button @click="router.push('/leave/approvals')">Go to Leave Approvals</Button>
+            <Button @click="router.push('/leave/approvals')">{{ t('approval.goToLeave') }}</Button>
           </CardContent>
         </Card>
       </TabsContent>
@@ -147,8 +149,8 @@ function onReject(id: ID<'LVR'>) {
         <Card class="mt-4">
           <CardContent class="pt-6">
             <EmptyState
-              title="No attendance corrections"
-              description="Attendance correction flow is deferred to Tier C."
+              :title="t('approval.noCorrections')"
+              :description="t('approval.deferredNote')"
             />
           </CardContent>
         </Card>

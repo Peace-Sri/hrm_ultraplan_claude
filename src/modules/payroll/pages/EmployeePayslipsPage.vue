@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { Search } from 'lucide-vue-next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,6 +19,7 @@ import { useEmployeeStore } from '@/modules/employee/stores/employee'
 import { useAppStore } from '@/stores/app'
 import { useLocale } from '@/composables/useLocale'
 
+const { t } = useI18n()
 const router = useRouter()
 const payroll = usePayrollStore()
 const employee = useEmployeeStore()
@@ -59,24 +61,24 @@ function nameOf(id: string) {
 
 <template>
   <div>
-    <PageHeader title="Employee Payslips" :description="`${now.toLocaleString('en', { month: 'long', year: 'numeric' })}`" />
+    <PageHeader :title="t('payroll.employeePayslips')" :description="`${now.toLocaleString('th', { month: 'long', year: 'numeric' })}`" />
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
       <Card>
         <CardContent class="pt-4">
-          <div class="text-xs text-muted-foreground">Total Gross</div>
+          <div class="text-xs text-muted-foreground">{{ t('payroll.stats.totalGross') }}</div>
           <div class="text-xl font-bold">{{ thb(totalGross) }}</div>
         </CardContent>
       </Card>
       <Card>
         <CardContent class="pt-4">
-          <div class="text-xs text-muted-foreground">Total Deductions</div>
+          <div class="text-xs text-muted-foreground">{{ t('payroll.stats.totalDed') }}</div>
           <div class="text-xl font-bold text-destructive">{{ thb(totalDed) }}</div>
         </CardContent>
       </Card>
       <Card>
         <CardContent class="pt-4">
-          <div class="text-xs text-muted-foreground">Total Net Payout</div>
+          <div class="text-xs text-muted-foreground">{{ t('payroll.stats.totalNet') }}</div>
           <div class="text-xl font-bold text-primary">{{ thb(totalNet) }}</div>
         </CardContent>
       </Card>
@@ -84,23 +86,23 @@ function nameOf(id: string) {
 
     <div class="mb-4 relative">
       <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      <Input v-model="search" placeholder="Search by name or ID..." class="pl-9 max-w-md" />
+      <Input v-model="search" :placeholder="t('payroll.searchPlaceholder')" class="pl-9 max-w-md" />
     </div>
 
     <Card>
       <CardHeader>
-        <CardTitle>{{ filtered.length }} Payslips</CardTitle>
+        <CardTitle>{{ filtered.length }} {{ t('payroll.payslip') }}</CardTitle>
       </CardHeader>
       <CardContent class="pt-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Employee</TableHead>
-              <TableHead class="text-right">Gross</TableHead>
-              <TableHead class="text-right">Tax</TableHead>
+              <TableHead>{{ t('leave.table.employee') }}</TableHead>
+              <TableHead class="text-right">{{ t('payroll.earnings.total') }}</TableHead>
+              <TableHead class="text-right">{{ t('payroll.deductions.tax') }}</TableHead>
               <TableHead class="text-right">SSO</TableHead>
               <TableHead class="text-right">PVD</TableHead>
-              <TableHead class="text-right">Net Pay</TableHead>
+              <TableHead class="text-right">{{ t('payroll.netPay') }}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

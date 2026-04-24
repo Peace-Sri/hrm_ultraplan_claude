@@ -12,6 +12,7 @@
     "search": "ค้นหา",
     "filter": "กรอง",
     "export": "ส่งออก",
+    "import": "นำเข้า",
     "confirm": "ยืนยัน",
     "submit": "ส่ง",
     "approve": "อนุมัติ",
@@ -26,7 +27,15 @@
     "yes": "ใช่",
     "no": "ไม่",
     "all": "ทั้งหมด",
-    "actions": "การกระทำ"
+    "actions": "การกระทำ",
+    "download": "ดาวน์โหลด",
+    "downloadPdf": "ดาวน์โหลด PDF",
+    "goBack": "กลับ",
+    "close": "ปิด",
+    "page": "หน้า",
+    "of": "จาก",
+    "total": "รวม",
+    "today": "วันนี้"
   },
   "nav": {
     "dashboard": "แดชบอร์ด",
@@ -45,11 +54,19 @@
     "username": "ชื่อผู้ใช้",
     "password": "รหัสผ่าน",
     "login": "เข้าสู่ระบบ",
-    "quickLogin": "Quick Login",
+    "quickLogin": "เข้าสู่ระบบด่วน",
     "hr": "HR Admin",
     "manager": "หัวหน้า",
     "employee": "พนักงาน",
-    "invalid": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"
+    "invalid": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
+    "pocNote": "POC — รหัสผ่านอะไรก็ได้สำหรับ seed users",
+    "toggleLocale": "สลับภาษา",
+    "toggleTheme": "สลับธีม",
+    "forbidden": {
+      "title": "403 — ไม่มีสิทธิ์เข้าถึง",
+      "description": "บทบาทปัจจุบันของคุณไม่มีสิทธิ์ดูหน้านี้",
+      "goHome": "ไปแดชบอร์ด"
+    }
   },
   "role": {
     "hr_admin": "แอดมิน HR",
@@ -62,13 +79,278 @@
     "system": "ตามระบบ"
   },
   "settings": {
+    "title": "ตั้งค่า",
     "language": "ภาษา",
+    "languageDescription": "สลับระหว่างภาษาไทย/อังกฤษ",
     "theme": "ธีม",
+    "themeDescription": "สว่าง, มืด, หรือตามระบบ",
     "dateSystem": "ระบบปี",
-    "profile": "โปรไฟล์"
+    "dateSystemDescription": "แสดงวันที่เป็น ค.ศ. (CE) หรือ พ.ศ. (BE)",
+    "profile": "โปรไฟล์",
+    "profileDescription": "ตั้งค่าข้อมูลส่วนตัว — จะมาใน Phase 12",
+    "editProfile": "แก้ไขโปรไฟล์"
   },
   "dateSystem": {
     "CE": "ค.ศ.",
     "BE": "พ.ศ."
+  },
+  "dashboard": {
+    "presentToday": "มาทำงานวันนี้",
+    "onLeaveToday": "ลาวันนี้",
+    "pendingApprovals": "รออนุมัติ",
+    "attendanceTrend": "แนวโน้มการเข้างาน — 7 วันล่าสุด",
+    "attendanceTrendDesc": "จำนวนคนที่มาทำงาน (รวมมาสาย) ทั้งบริษัท",
+    "quickActions": "เมนูลัด",
+    "recentActivity": "กิจกรรมล่าสุด",
+    "noActivity": "ไม่มีกิจกรรมล่าสุด",
+    "clockInOut": "ลงเวลาเข้า-ออก",
+    "applyLeave": "ขอลางาน",
+    "myPayslip": "สลิปเงินเดือน"
+  },
+  "employee": {
+    "list": {
+      "title": "พนักงาน",
+      "count": "ทั้งหมด",
+      "noMatch": "ไม่มีพนักงานที่ตรงกับตัวกรอง"
+    },
+    "table": {
+      "no": "รหัส",
+      "name": "ชื่อ",
+      "department": "แผนก",
+      "position": "ตำแหน่ง",
+      "salary": "เงินเดือน",
+      "status": "สถานะ",
+      "nationality": "สัญชาติ"
+    },
+    "filter": {
+      "allDepartments": "ทุกแผนก",
+      "allStatuses": "ทุกสถานะ",
+      "active": "ทำงาน",
+      "inactive": "ไม่ทำงาน",
+      "terminated": "ลาออก"
+    },
+    "detail": {
+      "recentAttendance": "การเข้างานล่าสุด",
+      "leaveHistory": "ประวัติการลา",
+      "payslipHistory": "ประวัติสลิปเงินเดือน",
+      "noRecords": "ไม่มีข้อมูล",
+      "noLeaves": "ไม่มีใบลา",
+      "noPayslips": "ไม่มีสลิปเงินเดือน",
+      "confirmDelete": "ลบพนักงาน {name}?",
+      "confirmDeleteDesc": "จะเปลี่ยนสถานะเป็น 'ลาออก' (soft delete) สามารถกู้คืนได้ภายหลัง"
+    },
+    "tabs": {
+      "personal": "ข้อมูลส่วนตัว",
+      "work": "งาน",
+      "compensation": "เงินเดือน/สวัสดิการ",
+      "history": "ประวัติ"
+    },
+    "fields": {
+      "titleTh": "คำนำหน้า (ไทย)",
+      "titleEn": "คำนำหน้า (อังกฤษ)",
+      "firstNameTh": "ชื่อ (ไทย)",
+      "lastNameTh": "นามสกุล (ไทย)",
+      "firstNameEn": "ชื่อ (อังกฤษ)",
+      "lastNameEn": "นามสกุล (อังกฤษ)",
+      "nickname": "ชื่อเล่น",
+      "nationality": "สัญชาติ",
+      "thaiId": "เลขบัตรประชาชน",
+      "thaiIdPlaceholder": "เลขบัตรประชาชน 13 หลัก",
+      "thaiIdValid": "ถูกต้อง",
+      "thaiIdInvalid": "เลขบัตรประชาชนไม่ถูกต้อง (Mod-11 ผิด)",
+      "dob": "วันเกิด",
+      "gender": "เพศ",
+      "male": "ชาย",
+      "female": "หญิง",
+      "other": "อื่นๆ",
+      "email": "อีเมล",
+      "phone": "เบอร์โทร",
+      "address": "ที่อยู่",
+      "department": "แผนก",
+      "position": "ตำแหน่ง",
+      "startDate": "วันเริ่มงาน",
+      "probationEnd": "สิ้นสุดทดลองงาน",
+      "baseSalary": "เงินเดือนพื้นฐาน (บาท/เดือน)",
+      "allowances": "เบี้ยเลี้ยง (บาท/เดือน)",
+      "pvdRate": "อัตรากองทุนสำรองเลี้ยงชีพ",
+      "bank": "ธนาคาร",
+      "bankAccount": "เลขบัญชี (10 หลัก)",
+      "foreignDocs": "เอกสารต่างชาติ",
+      "workPermit": "บัตรชมพู (Work Permit)",
+      "workPermitExpiry": "วันหมดอายุบัตรชมพู",
+      "passport": "หนังสือเดินทาง (Passport)",
+      "passportExpiry": "วันหมดอายุ Passport",
+      "visaType": "ประเภทวีซ่า",
+      "visaExpiry": "วันหมดอายุวีซ่า",
+      "entryDate": "วันที่เข้าประเทศ",
+      "expiresOn": "หมดอายุ"
+    },
+    "add": "เพิ่มพนักงาน",
+    "editTitle": "แก้ไขข้อมูลพนักงาน",
+    "createdSuccess": "สร้างพนักงานสำเร็จ",
+    "updatedSuccess": "บันทึกการแก้ไขสำเร็จ"
+  },
+  "nationality": {
+    "TH": "ไทย",
+    "MM": "เมียนมา",
+    "KH": "กัมพูชา",
+    "LA": "ลาว",
+    "VN": "เวียดนาม",
+    "OTHER": "อื่นๆ"
+  },
+  "attendance": {
+    "clockInOut": "ลงเวลาเข้า-ออก",
+    "status": {
+      "notClocked": "ยังไม่ลงเวลาเข้า",
+      "working": "กำลังทำงาน",
+      "done": "จบงานวันนี้"
+    },
+    "method": "วิธีลงเวลา",
+    "methodGps": "GPS",
+    "methodWifi": "Wi-Fi",
+    "methodFace": "Face Recognition (สาธิต)",
+    "methodFingerprint": "Fingerprint (สาธิต)",
+    "clockIn": "ลงเวลาเข้า",
+    "clockOut": "ลงเวลาออก",
+    "completed": "✓ จบงานวันนี้แล้ว",
+    "fromOffice": "จาก office",
+    "todayRecord": "บันทึกวันนี้",
+    "lateMinutes": "สาย",
+    "otMinutes": "OT",
+    "clockedInAt": "ลงเวลาเข้า {time}",
+    "clockedOutAt": "ลงเวลาออก {time}",
+    "gpsDenied": "ปฏิเสธ GPS ({msg}); ใช้พิกัดจำลอง",
+    "gpsUnsupported": "เบราว์เซอร์ไม่รองรับ GPS; ใช้พิกัดจำลอง",
+    "myAttendance": "ประวัติการเข้างาน",
+    "myAttendanceDesc": "30 วันล่าสุด",
+    "teamAttendance": "การเข้างานของทีม",
+    "date": "วันที่",
+    "clockedIn": "เข้า",
+    "clockedOut": "ออก",
+    "worked": "ทำงาน",
+    "late": "สาย",
+    "ot": "OT",
+    "recordStatus": {
+      "present": "มา",
+      "late": "สาย",
+      "absent": "ขาด",
+      "leave": "ลา",
+      "holiday": "วันหยุด",
+      "weekend": "เสาร์-อาทิตย์"
+    },
+    "noRecords": "ไม่มีบันทึกสำหรับวันที่เลือก"
+  },
+  "leave": {
+    "myLeaves": "ลางานของฉัน",
+    "leaveHistory": "ประวัติการลา",
+    "noHistory": "ยังไม่มีการลา",
+    "apply": "ขอลางาน",
+    "leaveType": "ประเภทการลา",
+    "startDate": "วันเริ่มต้น",
+    "endDate": "วันสิ้นสุด",
+    "days": "วัน",
+    "businessDaysNote": "วันทำการ (ไม่รวมเสาร์-อาทิตย์ + วันหยุดไทย)",
+    "reason": "เหตุผล",
+    "reasonPlaceholder": "บอกหัวหน้าว่าทำไมคุณถึงลา...",
+    "newRequest": "ใบลาใหม่",
+    "selectOnlyHolidays": "วันที่เลือกมีแต่เสาร์-อาทิตย์/วันหยุด",
+    "submitted": "ยื่นใบลาสำเร็จ",
+    "approvals": "อนุมัติการลา",
+    "pendingRequests": "คำขอรออนุมัติ",
+    "allCaughtUp": "อนุมัติครบหมดแล้ว!",
+    "noPending": "ยังไม่มีคำขอรออนุมัติ",
+    "approved": "อนุมัติแล้ว",
+    "rejected": "ปฏิเสธแล้ว",
+    "cancelled": "ยกเลิกแล้ว",
+    "approve": "อนุมัติการลา",
+    "reject": "ปฏิเสธการลา",
+    "commentOptional": "หมายเหตุ (ไม่บังคับ)",
+    "commentDesc": "เพิ่มหมายเหตุถึงพนักงาน",
+    "entitled": "ได้รับ",
+    "used": "ใช้ไป",
+    "remaining": "คงเหลือ",
+    "pending": "รออนุมัติ",
+    "balance": "วงเงินลา",
+    "status": {
+      "pending": "รออนุมัติ",
+      "approved": "อนุมัติ",
+      "rejected": "ปฏิเสธ",
+      "cancelled": "ยกเลิก",
+      "draft": "ร่าง"
+    },
+    "types": {
+      "sick": "ลาป่วย",
+      "personal": "ลากิจ",
+      "vacation": "ลาพักร้อน",
+      "maternity": "ลาคลอด",
+      "paternity": "ลาดูแลภรรยา",
+      "ordination": "ลาบวช",
+      "bereavement": "ลางานศพ",
+      "unpaid": "ลาไม่รับเงิน"
+    },
+    "table": {
+      "type": "ประเภท",
+      "dates": "ช่วงวันที่",
+      "employee": "พนักงาน",
+      "summary": "รายละเอียด",
+      "submittedAt": "ยื่นเมื่อ"
+    }
+  },
+  "payroll": {
+    "myPayslip": "สลิปเงินเดือนของฉัน",
+    "employeePayslips": "สลิปเงินเดือนพนักงาน",
+    "noPayslips": "ยังไม่มีสลิปเงินเดือน",
+    "noPayslipsDesc": "สลิปเงินเดือนจะออกหลังปิดเงินเดือนสิ้นเดือน",
+    "ytd": "ยอดสะสมทั้งปี",
+    "payslip": "สลิปเงินเดือน",
+    "workingDays": "วันทำการ",
+    "paidDays": "วันที่ได้รับเงิน",
+    "unpaidDays": "ขาด/ลาไม่รับเงิน",
+    "netPay": "รายได้สุทธิ",
+    "earnings": {
+      "title": "รายได้",
+      "base": "เงินเดือน",
+      "allowances": "เบี้ยเลี้ยง",
+      "otWeekday": "OT วันธรรมดา (1.5×)",
+      "otHolidayReg": "OT วันหยุด ชม.ปกติ (2×)",
+      "otHolidayExtra": "OT วันหยุด เกิน ชม. (3×)",
+      "bonus": "โบนัส",
+      "total": "รวมรายได้"
+    },
+    "deductions": {
+      "title": "รายการหัก",
+      "sso": "ประกันสังคม (5%, ไม่เกิน 750฿)",
+      "pvd": "กองทุนสำรองเลี้ยงชีพ",
+      "tax": "ภาษีหัก ณ ที่จ่าย",
+      "absence": "ขาดงาน",
+      "loan": "เงินกู้",
+      "other": "อื่นๆ",
+      "total": "รวมรายการหัก"
+    },
+    "compliance": "เป็นไปตาม พ.ร.บ. คุ้มครองแรงงาน §75 • ภาษีคำนวณตามอัตราก้าวหน้า 8 ขั้น ปี 2569 + withholding แบบรายปี",
+    "stats": {
+      "totalGross": "รายได้รวมทั้งหมด",
+      "totalDed": "รายการหักทั้งหมด",
+      "totalNet": "รายได้สุทธิรวม"
+    },
+    "searchPlaceholder": "ค้นหาชื่อหรือรหัสพนักงาน..."
+  },
+  "approval": {
+    "inbox": "กล่องอนุมัติ",
+    "tabAll": "ทั้งหมด",
+    "tabLeave": "การลา",
+    "tabAttendance": "แก้ไขเวลา",
+    "pendingItems": "รายการรออนุมัติ",
+    "goToLeave": "ไปหน้าอนุมัติการลา",
+    "noCorrections": "ไม่มีการขอแก้ไขเวลา",
+    "deferredNote": "ขั้นตอนขอแก้ไขเวลาเลื่อนไปทำใน Tier C",
+    "kind": {
+      "leave": "การลา"
+    }
+  },
+  "notifications": {
+    "title": "การแจ้งเตือน",
+    "markAllRead": "อ่านทั้งหมด",
+    "none": "ยังไม่มีการแจ้งเตือน"
   }
 }

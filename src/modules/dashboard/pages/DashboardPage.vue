@@ -63,21 +63,21 @@ const stats = computed(() => [
     to: '/employees',
   },
   {
-    label: 'Present Today',
+    label: t('dashboard.presentToday'),
     value: attendance.presentTodayCount,
     icon: Clock,
     tone: 'text-green-600 bg-green-50 dark:bg-green-950/50',
     to: '/attendance/team',
   },
   {
-    label: 'On Leave Today',
+    label: t('dashboard.onLeaveToday'),
     value: leave.onLeaveTodayCount,
     icon: Plane,
     tone: 'text-orange-600 bg-orange-50 dark:bg-orange-950/50',
     to: '/leave/approvals',
   },
   {
-    label: 'Pending Approvals',
+    label: t('dashboard.pendingApprovals'),
     value: pendingForMe.value,
     icon: Inbox,
     tone: 'text-purple-600 bg-purple-50 dark:bg-purple-950/50',
@@ -90,7 +90,7 @@ const chartData = computed(() => ({
   labels: trend.value.map((d) => fmtDate(d.date, 'd MMM')),
   datasets: [
     {
-      label: 'Present',
+      label: t('dashboard.presentToday'),
       data: trend.value.map((d) => d.count),
       borderColor: 'rgb(34, 197, 94)',
       backgroundColor: 'rgba(34, 197, 94, 0.1)',
@@ -124,11 +124,11 @@ const recentActivity = computed(() => {
   return leaves.slice(0, 10)
 })
 
-const quickActions = [
-  { label: 'Clock In/Out', icon: LogIn, to: '/attendance' },
-  { label: 'Apply Leave', icon: Plane, to: '/leave/apply' },
-  { label: 'My Payslip', icon: FileText, to: '/payroll/my' },
-]
+const quickActions = computed(() => [
+  { label: t('dashboard.clockInOut'), icon: LogIn, to: '/attendance' },
+  { label: t('dashboard.applyLeave'), icon: Plane, to: '/leave/apply' },
+  { label: t('dashboard.myPayslip'), icon: FileText, to: '/payroll/my' },
+])
 </script>
 
 <template>
@@ -164,8 +164,8 @@ const quickActions = [
       <!-- Chart -->
       <Card class="lg:col-span-2">
         <CardHeader>
-          <CardTitle>Attendance Trend — Last 7 Days</CardTitle>
-          <CardDescription>Present (including late) across the company</CardDescription>
+          <CardTitle>{{ t('dashboard.attendanceTrend') }}</CardTitle>
+          <CardDescription>{{ t('dashboard.attendanceTrendDesc') }}</CardDescription>
         </CardHeader>
         <CardContent>
           <div class="h-64">
@@ -177,7 +177,7 @@ const quickActions = [
       <!-- Quick Actions -->
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>{{ t('dashboard.quickActions') }}</CardTitle>
         </CardHeader>
         <CardContent class="space-y-2">
           <Button
@@ -197,7 +197,7 @@ const quickActions = [
     <!-- Recent Activity -->
     <Card class="mt-4">
       <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
+        <CardTitle>{{ t('dashboard.recentActivity') }}</CardTitle>
       </CardHeader>
       <CardContent>
         <ul class="divide-y">
@@ -210,7 +210,7 @@ const quickActions = [
             <span class="text-xs text-muted-foreground">{{ fmtDate(act.when, 'd MMM HH:mm') }}</span>
           </li>
           <li v-if="recentActivity.length === 0" class="py-4 text-center text-sm text-muted-foreground">
-            No recent activity
+            {{ t('dashboard.noActivity') }}
           </li>
         </ul>
       </CardContent>

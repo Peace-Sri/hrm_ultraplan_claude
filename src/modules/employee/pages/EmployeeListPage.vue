@@ -101,7 +101,7 @@ async function onExport() {
 
 <template>
   <div>
-    <PageHeader :title="t('nav.employees')" :description="`${filtered.length} ${t('common.all').toLowerCase()}`">
+    <PageHeader :title="t('nav.employees')" :description="`${filtered.length} ${t('common.total')}`">
       <template #actions>
         <Button variant="outline" @click="onExport">
           <Download class="mr-2 h-4 w-4" />
@@ -140,9 +140,9 @@ async function onExport() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{{ t('common.all') }}</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="terminated">Terminated</SelectItem>
+              <SelectItem value="active">{{ t('employee.filter.active') }}</SelectItem>
+              <SelectItem value="inactive">{{ t('employee.filter.inactive') }}</SelectItem>
+              <SelectItem value="terminated">{{ t('employee.filter.terminated') }}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -153,12 +153,13 @@ async function onExport() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>#</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead class="hidden md:table-cell">Department</TableHead>
-            <TableHead class="hidden lg:table-cell">Position</TableHead>
-            <TableHead class="hidden xl:table-cell">Salary</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>{{ t('employee.table.no') }}</TableHead>
+            <TableHead>{{ t('employee.table.name') }}</TableHead>
+            <TableHead class="hidden md:table-cell">{{ t('employee.table.department') }}</TableHead>
+            <TableHead class="hidden lg:table-cell">{{ t('employee.table.position') }}</TableHead>
+            <TableHead class="hidden lg:table-cell">{{ t('employee.table.nationality') }}</TableHead>
+            <TableHead class="hidden xl:table-cell">{{ t('employee.table.salary') }}</TableHead>
+            <TableHead>{{ t('employee.table.status') }}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -182,16 +183,19 @@ async function onExport() {
             </TableCell>
             <TableCell class="hidden md:table-cell">{{ employee.getDepartmentName(e.departmentId, app.locale) }}</TableCell>
             <TableCell class="hidden lg:table-cell">{{ employee.getPositionName(e.positionId, app.locale) }}</TableCell>
+            <TableCell class="hidden lg:table-cell">
+              <Badge variant="outline">{{ t(`nationality.${e.nationality}`) }}</Badge>
+            </TableCell>
             <TableCell class="hidden xl:table-cell">{{ thb(e.baseSalary) }}</TableCell>
             <TableCell>
               <Badge :variant="e.status === 'active' ? 'default' : 'secondary'">
-                {{ e.status }}
+                {{ t(`employee.filter.${e.status}`) }}
               </Badge>
             </TableCell>
           </TableRow>
           <TableRow v-if="paged.length === 0">
-            <TableCell colspan="6" class="text-center py-8 text-muted-foreground">
-              No employees match filters.
+            <TableCell colspan="7" class="text-center py-8 text-muted-foreground">
+              {{ t('employee.list.noMatch') }}
             </TableCell>
           </TableRow>
         </TableBody>
@@ -199,7 +203,7 @@ async function onExport() {
 
       <div class="flex items-center justify-between p-3 border-t text-sm">
         <span class="text-muted-foreground">
-          Page {{ page }} of {{ totalPages }} ({{ filtered.length }} total)
+          {{ t('common.page') }} {{ page }} {{ t('common.of') }} {{ totalPages }} ({{ filtered.length }} {{ t('common.total') }})
         </span>
         <div class="flex gap-2">
           <Button variant="outline" size="sm" :disabled="page === 1" @click="page--">

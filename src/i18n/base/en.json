@@ -12,6 +12,7 @@
     "search": "Search",
     "filter": "Filter",
     "export": "Export",
+    "import": "Import",
     "confirm": "Confirm",
     "submit": "Submit",
     "approve": "Approve",
@@ -26,7 +27,15 @@
     "yes": "Yes",
     "no": "No",
     "all": "All",
-    "actions": "Actions"
+    "actions": "Actions",
+    "download": "Download",
+    "downloadPdf": "Download PDF",
+    "goBack": "Go Back",
+    "close": "Close",
+    "page": "Page",
+    "of": "of",
+    "total": "total",
+    "today": "Today"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -49,7 +58,15 @@
     "hr": "HR Admin",
     "manager": "Manager",
     "employee": "Employee",
-    "invalid": "Invalid username or password"
+    "invalid": "Invalid username or password",
+    "pocNote": "POC — any non-empty password works for seed users.",
+    "toggleLocale": "Toggle locale",
+    "toggleTheme": "Toggle theme",
+    "forbidden": {
+      "title": "403 — Forbidden",
+      "description": "You don't have permission to view this page in your current role.",
+      "goHome": "Go to Dashboard"
+    }
   },
   "role": {
     "hr_admin": "HR Admin",
@@ -62,13 +79,278 @@
     "system": "System"
   },
   "settings": {
+    "title": "Settings",
     "language": "Language",
+    "languageDescription": "Switch interface between Thai and English.",
     "theme": "Theme",
+    "themeDescription": "Light, dark, or follow system preference.",
     "dateSystem": "Calendar",
-    "profile": "Profile"
+    "dateSystemDescription": "Display dates in Christian Era (CE) or Buddhist Era (BE).",
+    "profile": "Profile",
+    "profileDescription": "Coming in Phase 12 — profile edit + avatar.",
+    "editProfile": "Edit Profile"
   },
   "dateSystem": {
     "CE": "CE",
     "BE": "BE (พ.ศ.)"
+  },
+  "dashboard": {
+    "presentToday": "Present Today",
+    "onLeaveToday": "On Leave Today",
+    "pendingApprovals": "Pending Approvals",
+    "attendanceTrend": "Attendance Trend — Last 7 Days",
+    "attendanceTrendDesc": "Present (including late) across the company",
+    "quickActions": "Quick Actions",
+    "recentActivity": "Recent Activity",
+    "noActivity": "No recent activity",
+    "clockInOut": "Clock In/Out",
+    "applyLeave": "Apply Leave",
+    "myPayslip": "My Payslip"
+  },
+  "employee": {
+    "list": {
+      "title": "Employees",
+      "count": "total",
+      "noMatch": "No employees match filters"
+    },
+    "table": {
+      "no": "ID",
+      "name": "Name",
+      "department": "Department",
+      "position": "Position",
+      "salary": "Salary",
+      "status": "Status",
+      "nationality": "Nationality"
+    },
+    "filter": {
+      "allDepartments": "All Departments",
+      "allStatuses": "All Statuses",
+      "active": "Active",
+      "inactive": "Inactive",
+      "terminated": "Terminated"
+    },
+    "detail": {
+      "recentAttendance": "Recent Attendance",
+      "leaveHistory": "Leave History",
+      "payslipHistory": "Payslip History",
+      "noRecords": "No records",
+      "noLeaves": "No leave records",
+      "noPayslips": "No payslips",
+      "confirmDelete": "Delete {name}?",
+      "confirmDeleteDesc": "This marks the employee as terminated (soft delete). You can reactivate later."
+    },
+    "tabs": {
+      "personal": "Personal",
+      "work": "Work",
+      "compensation": "Compensation",
+      "history": "History"
+    },
+    "fields": {
+      "titleTh": "Title (TH)",
+      "titleEn": "Title (EN)",
+      "firstNameTh": "First Name (TH)",
+      "lastNameTh": "Last Name (TH)",
+      "firstNameEn": "First Name (EN)",
+      "lastNameEn": "Last Name (EN)",
+      "nickname": "Nickname",
+      "nationality": "Nationality",
+      "thaiId": "Thai ID",
+      "thaiIdPlaceholder": "13-digit Thai National ID",
+      "thaiIdValid": "Valid",
+      "thaiIdInvalid": "Thai ID checksum invalid (Mod-11)",
+      "dob": "Date of Birth",
+      "gender": "Gender",
+      "male": "Male",
+      "female": "Female",
+      "other": "Other",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "department": "Department",
+      "position": "Position",
+      "startDate": "Start Date",
+      "probationEnd": "Probation End",
+      "baseSalary": "Base Salary (THB/mo)",
+      "allowances": "Allowances (THB/mo)",
+      "pvdRate": "Provident Fund Rate",
+      "bank": "Bank",
+      "bankAccount": "Account (10 digits)",
+      "foreignDocs": "Foreign Documents",
+      "workPermit": "Work Permit (บัตรชมพู)",
+      "workPermitExpiry": "Work Permit Expiry",
+      "passport": "Passport",
+      "passportExpiry": "Passport Expiry",
+      "visaType": "Visa Type",
+      "visaExpiry": "Visa Expiry",
+      "entryDate": "Entry Date",
+      "expiresOn": "Expires"
+    },
+    "add": "Add Employee",
+    "editTitle": "Edit Employee",
+    "createdSuccess": "Employee created",
+    "updatedSuccess": "Employee updated"
+  },
+  "nationality": {
+    "TH": "Thai",
+    "MM": "Myanmar",
+    "KH": "Cambodian",
+    "LA": "Lao",
+    "VN": "Vietnamese",
+    "OTHER": "Other"
+  },
+  "attendance": {
+    "clockInOut": "Clock In / Out",
+    "status": {
+      "notClocked": "Not Clocked In",
+      "working": "Working",
+      "done": "Done for Today"
+    },
+    "method": "Check-in Method",
+    "methodGps": "GPS",
+    "methodWifi": "Wi-Fi",
+    "methodFace": "Face Recognition (demo)",
+    "methodFingerprint": "Fingerprint (demo)",
+    "clockIn": "Clock In",
+    "clockOut": "Clock Out",
+    "completed": "✓ You've completed your workday",
+    "fromOffice": "from office",
+    "todayRecord": "Today's Record",
+    "lateMinutes": "Late",
+    "otMinutes": "OT",
+    "clockedInAt": "Clocked in at {time}",
+    "clockedOutAt": "Clocked out at {time}",
+    "gpsDenied": "GPS denied ({msg}); using mock location.",
+    "gpsUnsupported": "Geolocation not supported; using mock location.",
+    "myAttendance": "My Attendance",
+    "myAttendanceDesc": "Last 30 days",
+    "teamAttendance": "Team Attendance",
+    "date": "Date",
+    "clockedIn": "Clock In",
+    "clockedOut": "Clock Out",
+    "worked": "Worked",
+    "late": "Late",
+    "ot": "OT",
+    "recordStatus": {
+      "present": "Present",
+      "late": "Late",
+      "absent": "Absent",
+      "leave": "Leave",
+      "holiday": "Holiday",
+      "weekend": "Weekend"
+    },
+    "noRecords": "No records for this date"
+  },
+  "leave": {
+    "myLeaves": "My Leaves",
+    "leaveHistory": "Leave History",
+    "noHistory": "No leave requests yet",
+    "apply": "Apply Leave",
+    "leaveType": "Leave Type",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "days": "days",
+    "businessDaysNote": "business days (excluding weekends + Thai holidays)",
+    "reason": "Reason",
+    "reasonPlaceholder": "Tell your manager why...",
+    "newRequest": "New Leave Request",
+    "selectOnlyHolidays": "Selected dates include only weekends/holidays.",
+    "submitted": "Leave request submitted",
+    "approvals": "Leave Approvals",
+    "pendingRequests": "Pending Requests",
+    "allCaughtUp": "All caught up!",
+    "noPending": "No pending requests",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "cancelled": "Cancelled",
+    "approve": "Approve Leave",
+    "reject": "Reject Leave",
+    "commentOptional": "Comment (optional)",
+    "commentDesc": "Add an optional comment for the employee.",
+    "entitled": "Entitled",
+    "used": "Used",
+    "remaining": "Remaining",
+    "pending": "pending",
+    "balance": "Leave Balance",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled",
+      "draft": "Draft"
+    },
+    "types": {
+      "sick": "Sick",
+      "personal": "Personal",
+      "vacation": "Vacation",
+      "maternity": "Maternity",
+      "paternity": "Paternity",
+      "ordination": "Ordination",
+      "bereavement": "Bereavement",
+      "unpaid": "Unpaid"
+    },
+    "table": {
+      "type": "Type",
+      "dates": "Dates",
+      "employee": "Employee",
+      "summary": "Summary",
+      "submittedAt": "Submitted"
+    }
+  },
+  "payroll": {
+    "myPayslip": "My Payslip",
+    "employeePayslips": "Employee Payslips",
+    "noPayslips": "No payslips yet",
+    "noPayslipsDesc": "Payslips are generated after month-end payroll runs.",
+    "ytd": "YTD",
+    "payslip": "Payslip",
+    "workingDays": "working days",
+    "paidDays": "Paid days",
+    "unpaidDays": "Unpaid leave",
+    "netPay": "Net Pay",
+    "earnings": {
+      "title": "Earnings",
+      "base": "Base Salary",
+      "allowances": "Monthly Allowances",
+      "otWeekday": "OT Weekday (1.5×)",
+      "otHolidayReg": "OT Holiday Reg (2×)",
+      "otHolidayExtra": "OT Holiday Extra (3×)",
+      "bonus": "Bonus",
+      "total": "Total Earnings"
+    },
+    "deductions": {
+      "title": "Deductions",
+      "sso": "Social Security (5%, capped 750)",
+      "pvd": "Provident Fund",
+      "tax": "Withholding Tax",
+      "absence": "Absence Deduction",
+      "loan": "Loan",
+      "other": "Other",
+      "total": "Total Deductions"
+    },
+    "compliance": "Compliant with LPA §75. Tax computed with 2026 progressive brackets + annualized withholding.",
+    "stats": {
+      "totalGross": "Total Gross",
+      "totalDed": "Total Deductions",
+      "totalNet": "Total Net Payout"
+    },
+    "searchPlaceholder": "Search by name or ID..."
+  },
+  "approval": {
+    "inbox": "Approval Inbox",
+    "tabAll": "All",
+    "tabLeave": "Leave",
+    "tabAttendance": "Attendance",
+    "pendingItems": "Pending Items",
+    "goToLeave": "Go to Leave Approvals",
+    "noCorrections": "No attendance corrections",
+    "deferredNote": "Attendance correction flow is deferred to Tier C.",
+    "kind": {
+      "leave": "Leave"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "none": "No notifications yet"
   }
 }

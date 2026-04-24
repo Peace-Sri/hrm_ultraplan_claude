@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -19,6 +20,7 @@ import { useAuthStore } from '@/modules/auth/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { useLocale } from '@/composables/useLocale'
 
+const { t } = useI18n()
 const attendance = useAttendanceStore()
 const employee = useEmployeeStore()
 const auth = useAuthStore()
@@ -60,18 +62,18 @@ const summary = computed(() => {
 
 <template>
   <div>
-    <PageHeader title="Team Attendance" :description="fmtDate(selectedDate)" />
+    <PageHeader :title="t('attendance.teamAttendance')" :description="fmtDate(selectedDate)" />
 
     <div class="mb-4 flex items-end gap-3">
       <div class="space-y-1">
-        <Label>Date</Label>
+        <Label>{{ t('attendance.date') }}</Label>
         <Input v-model="selectedDate" type="date" class="w-48" />
       </div>
       <div class="flex gap-2 flex-wrap">
-        <Badge variant="default">Present: {{ summary.present }}</Badge>
-        <Badge variant="destructive">Late: {{ summary.late }}</Badge>
-        <Badge variant="destructive">Absent: {{ summary.absent }}</Badge>
-        <Badge variant="secondary">Leave: {{ summary.leave }}</Badge>
+        <Badge variant="default">{{ t('attendance.recordStatus.present') }}: {{ summary.present }}</Badge>
+        <Badge variant="destructive">{{ t('attendance.recordStatus.late') }}: {{ summary.late }}</Badge>
+        <Badge variant="destructive">{{ t('attendance.recordStatus.absent') }}: {{ summary.absent }}</Badge>
+        <Badge variant="secondary">{{ t('attendance.recordStatus.leave') }}: {{ summary.leave }}</Badge>
       </div>
     </div>
 
@@ -79,23 +81,23 @@ const summary = computed(() => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Employee</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Clock In</TableHead>
-            <TableHead>Clock Out</TableHead>
-            <TableHead>Late</TableHead>
+            <TableHead>{{ t('leave.table.employee') }}</TableHead>
+            <TableHead>{{ t('employee.table.status') }}</TableHead>
+            <TableHead>{{ t('attendance.clockedIn') }}</TableHead>
+            <TableHead>{{ t('attendance.clockedOut') }}</TableHead>
+            <TableHead>{{ t('attendance.late') }}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-for="r in scopedRecords" :key="r.id">
             <TableCell>{{ nameOf(r.employeeId) }}</TableCell>
-            <TableCell><Badge class="capitalize">{{ r.status }}</Badge></TableCell>
+            <TableCell><Badge>{{ t(`attendance.recordStatus.${r.status}`) }}</Badge></TableCell>
             <TableCell class="font-mono">{{ r.clockInAt ? fmtTime(r.clockInAt) : '—' }}</TableCell>
             <TableCell class="font-mono">{{ r.clockOutAt ? fmtTime(r.clockOutAt) : '—' }}</TableCell>
             <TableCell>{{ r.lateMinutes > 0 ? `${r.lateMinutes}m` : '—' }}</TableCell>
           </TableRow>
           <TableRow v-if="scopedRecords.length === 0">
-            <TableCell colspan="5" class="text-center py-8 text-muted-foreground">No records for this date</TableCell>
+            <TableCell colspan="5" class="text-center py-8 text-muted-foreground">{{ t('attendance.noRecords') }}</TableCell>
           </TableRow>
         </TableBody>
       </Table>

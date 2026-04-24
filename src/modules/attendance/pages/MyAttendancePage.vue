@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -16,6 +17,7 @@ import { useAttendanceStore } from '@/modules/attendance/stores/attendance'
 import { useAuthStore } from '@/modules/auth/stores/auth'
 import { useLocale } from '@/composables/useLocale'
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const attendance = useAttendanceStore()
 const { date: fmtDate, time: fmtTime } = useLocale()
@@ -38,26 +40,26 @@ const statusVariant: Record<string, 'default' | 'destructive' | 'secondary' | 'o
 
 <template>
   <div>
-    <PageHeader title="My Attendance" description="Last 30 days" />
+    <PageHeader :title="t('attendance.myAttendance')" :description="t('attendance.myAttendanceDesc')" />
 
     <Card>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Clock In</TableHead>
-            <TableHead>Clock Out</TableHead>
-            <TableHead>Worked</TableHead>
-            <TableHead>Late</TableHead>
-            <TableHead>OT</TableHead>
+            <TableHead>{{ t('attendance.date') }}</TableHead>
+            <TableHead>{{ t('employee.table.status') }}</TableHead>
+            <TableHead>{{ t('attendance.clockedIn') }}</TableHead>
+            <TableHead>{{ t('attendance.clockedOut') }}</TableHead>
+            <TableHead>{{ t('attendance.worked') }}</TableHead>
+            <TableHead>{{ t('attendance.late') }}</TableHead>
+            <TableHead>{{ t('attendance.ot') }}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-for="r in myRecords" :key="r.id">
             <TableCell>{{ fmtDate(r.date) }}</TableCell>
             <TableCell>
-              <Badge :variant="statusVariant[r.status]" class="capitalize">{{ r.status }}</Badge>
+              <Badge :variant="statusVariant[r.status]">{{ t(`attendance.recordStatus.${r.status}`) }}</Badge>
             </TableCell>
             <TableCell class="font-mono">{{ r.clockInAt ? fmtTime(r.clockInAt) : '—' }}</TableCell>
             <TableCell class="font-mono">{{ r.clockOutAt ? fmtTime(r.clockOutAt) : '—' }}</TableCell>
@@ -73,7 +75,7 @@ const statusVariant: Record<string, 'default' | 'destructive' | 'secondary' | 'o
           </TableRow>
           <TableRow v-if="myRecords.length === 0">
             <TableCell colspan="7">
-              <EmptyState title="No attendance records" />
+              <EmptyState :title="t('attendance.noRecords')" />
             </TableCell>
           </TableRow>
         </TableBody>

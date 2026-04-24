@@ -95,23 +95,23 @@ function typeOf(key: string) {
 
 <template>
   <div>
-    <PageHeader title="Leave Approvals" :description="`${pending.length} pending`" />
+    <PageHeader :title="t('leave.approvals')" :description="`${pending.length} ${t('leave.pending')}`" />
 
     <Card>
       <CardHeader v-if="pending.length > 0">
-        <CardTitle>Pending Requests</CardTitle>
+        <CardTitle>{{ t('leave.pendingRequests') }}</CardTitle>
       </CardHeader>
       <CardContent class="pt-0">
         <Table v-if="pending.length > 0">
           <TableHeader>
             <TableRow>
-              <TableHead>Employee</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Dates</TableHead>
-              <TableHead>Days</TableHead>
-              <TableHead>Reason</TableHead>
-              <TableHead>Submitted</TableHead>
-              <TableHead class="text-right">Actions</TableHead>
+              <TableHead>{{ t('leave.table.employee') }}</TableHead>
+              <TableHead>{{ t('leave.table.type') }}</TableHead>
+              <TableHead>{{ t('leave.table.dates') }}</TableHead>
+              <TableHead>{{ t('leave.days') }}</TableHead>
+              <TableHead>{{ t('leave.reason') }}</TableHead>
+              <TableHead>{{ t('leave.table.submittedAt') }}</TableHead>
+              <TableHead class="text-right">{{ t('common.actions') }}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -139,8 +139,8 @@ function typeOf(key: string) {
         </Table>
         <EmptyState
           v-else
-          title="No pending requests"
-          description="All caught up! Incoming requests will show here."
+          :title="t('leave.allCaughtUp')"
+          :description="t('leave.noPending')"
         />
       </CardContent>
     </Card>
@@ -148,12 +148,12 @@ function typeOf(key: string) {
     <AlertDialog v-model:open="dialogOpen">
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle class="capitalize">{{ dialogAction }} Leave</AlertDialogTitle>
+          <AlertDialogTitle>{{ dialogAction === 'approve' ? t('leave.approve') : t('leave.reject') }}</AlertDialogTitle>
           <AlertDialogDescription>
-            Add an optional comment for the employee.
+            {{ t('leave.commentDesc') }}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <Textarea v-model="dialogComment" rows="3" placeholder="Comment (optional)" />
+        <Textarea v-model="dialogComment" rows="3" :placeholder="t('leave.commentOptional')" />
         <AlertDialogFooter>
           <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
           <AlertDialogAction @click="onConfirm">

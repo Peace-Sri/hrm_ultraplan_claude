@@ -31,6 +31,8 @@ const editingId = computed(() => route.params.id as ID<'EMP'> | undefined)
 const isEdit = computed(() => !!editingId.value)
 const existing = computed(() => (editingId.value ? employee.byId(editingId.value) : undefined))
 
+import type { Nationality, VisaType } from '@/types/employee'
+
 const form = ref<{
   titleTh: 'นาย' | 'นาง' | 'นางสาว'
   titleEn: 'Mr' | 'Mrs' | 'Ms'
@@ -39,7 +41,15 @@ const form = ref<{
   firstNameEn: string
   lastNameEn: string
   nicknameTh: string
+  nationality: Nationality
   thaiId: string
+  workPermitNo: string
+  workPermitExpiry: string
+  passportNo: string
+  passportExpiry: string
+  visaType: VisaType
+  visaExpiry: string
+  entryDate: string
   dob: string
   gender: 'male' | 'female' | 'other'
   email: string
@@ -65,7 +75,15 @@ const form = ref<{
   firstNameEn: '',
   lastNameEn: '',
   nicknameTh: '',
+  nationality: 'TH',
   thaiId: '',
+  workPermitNo: '',
+  workPermitExpiry: '',
+  passportNo: '',
+  passportExpiry: '',
+  visaType: 'Non-B',
+  visaExpiry: '',
+  entryDate: '',
   dob: '1990-01-01',
   gender: 'male',
   email: '',
@@ -96,7 +114,15 @@ watchEffect(() => {
       firstNameEn: e.firstNameEn,
       lastNameEn: e.lastNameEn,
       nicknameTh: e.nicknameTh ?? '',
-      thaiId: e.thaiId,
+      nationality: e.nationality,
+      thaiId: e.thaiId ?? '',
+      workPermitNo: e.foreign?.workPermitNo ?? '',
+      workPermitExpiry: e.foreign?.workPermitExpiry ?? '',
+      passportNo: e.foreign?.passportNo ?? '',
+      passportExpiry: e.foreign?.passportExpiry ?? '',
+      visaType: e.foreign?.visaType ?? 'Non-B',
+      visaExpiry: e.foreign?.visaExpiry ?? '',
+      entryDate: e.foreign?.entryDate ?? '',
       dob: e.dob,
       gender: e.gender,
       email: e.email,
@@ -118,15 +144,28 @@ watchEffect(() => {
   }
 })
 
+const isTH = computed(() => form.value.nationality === 'TH')
+
 const thaiIdError = computed(() => {
+  if (!isTH.value) return ''
   if (!form.value.thaiId) return ''
-  return validateThaiID(form.value.thaiId) ? '' : 'Thai ID checksum invalid (Mod-11)'
+  return validateThaiID(form.value.thaiId) ? '' : 'เลขบัตรประชาชนไม่ถูกต้อง (Mod-11 ผิด)'
+})
+
+const passportError = computed(() => {
+  if (isTH.value) return ''
+  if (!form.value.passportNo) return ''
+  return form.value.passportNo.length < 6 ? 'เลขหนังสือเดินทางต้องมีอย่างน้อย 6 หลัก' : ''
 })
 
 function onSubmit(ev: Event) {
   ev.preventDefault()
   if (thaiIdError.value) {
     toast.error(thaiIdError.value)
+    return
+  }
+  if (passportError.value) {
+    toast.error(passportError.value)
     return
   }
   const f = form.value
@@ -138,7 +177,19 @@ function onSubmit(ev: Event) {
     firstNameEn: f.firstNameEn,
     lastNameEn: f.lastNameEn,
     nicknameTh: f.nicknameTh || undefined,
-    thaiId: f.thaiId,
+    nationality: f.nationality,
+    thaiId: isTH.value ? f.thaiId : undefined,
+    foreign: !isTH.value
+      ? {
+          workPermitNo: f.workPermitNo || undefined,
+          workPermitExpiry: f.workPermitExpiry || undefined,
+          passportNo: f.passportNo || undefined,
+          passportExpiry: f.passportExpiry || undefined,
+          visaType: f.visaType,
+          visaExpiry: f.visaExpiry || undefined,
+          entryDate: f.entryDate || undefined,
+        }
+      : undefined,
     dob: f.dob,
     gender: f.gender,
     email: f.email,
@@ -237,12 +288,74 @@ function onSubmit(ev: Event) {
               <Input v-model="form.nicknameTh" />
             </div>
             <div class="space-y-1">
-              <Label>Thai ID (13 digits)</Label>
+              <Label>สัญชาติ</Label>
+              <Select v-model="form.nationality">
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TH">🇹🇭 ไทย</SelectItem>
+                  <SelectItem value="MM">🇲🇲 เมียนมา</SelectItem>
+                  <SelectItem value="KH">🇰🇭 กัมพูชา</SelectItem>
+                  <SelectItem value="LA">🇱🇦 ลาว</SelectItem>
+                  <SelectItem value="VN">🇻🇳 เวียดนาม</SelectItem>
+                  <SelectItem value="OTHER">อื่นๆ</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <!-- Thai citizen: show Thai ID -->
+            <div v-if="form.nationality === 'TH'" class="space-y-1">
+              <Label>เลขบัตรประชาชน (13 หลัก)</Label>
               <Input v-model="form.thaiId" placeholder="1234567890123" maxlength="17" />
               <p v-if="thaiIdError" class="text-xs text-destructive">{{ thaiIdError }}</p>
               <p v-else-if="form.thaiId && validateThaiID(form.thaiId)" class="text-xs text-green-600">
-                ✓ Valid: {{ formatThaiID(form.thaiId) }}
+                ✓ ถูกต้อง: {{ formatThaiID(form.thaiId) }}
               </p>
+            </div>
+
+            <!-- Foreign worker: show WP + Passport + Visa -->
+            <div v-else class="space-y-3 p-3 border rounded-md bg-muted/30">
+              <div class="text-sm font-semibold">เอกสารต่างชาติ</div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <Label>บัตรชมพู (Work Permit)</Label>
+                  <Input v-model="form.workPermitNo" placeholder="WP-XXXXXXX" />
+                </div>
+                <div class="space-y-1">
+                  <Label>วันหมดอายุบัตรชมพู</Label>
+                  <Input v-model="form.workPermitExpiry" type="date" />
+                </div>
+                <div class="space-y-1">
+                  <Label>หนังสือเดินทาง (Passport)</Label>
+                  <Input v-model="form.passportNo" placeholder="ABC12345" />
+                  <p v-if="passportError" class="text-xs text-destructive">{{ passportError }}</p>
+                </div>
+                <div class="space-y-1">
+                  <Label>วันหมดอายุ Passport</Label>
+                  <Input v-model="form.passportExpiry" type="date" />
+                </div>
+                <div class="space-y-1">
+                  <Label>ประเภทวีซ่า</Label>
+                  <Select v-model="form.visaType">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Non-B">Non-B (ทำงาน)</SelectItem>
+                      <SelectItem value="Non-ED">Non-ED (ศึกษา)</SelectItem>
+                      <SelectItem value="Non-O">Non-O (ครอบครัว)</SelectItem>
+                      <SelectItem value="LTR">LTR (พำนักระยะยาว)</SelectItem>
+                      <SelectItem value="Smart">Smart Visa</SelectItem>
+                      <SelectItem value="Other">อื่นๆ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div class="space-y-1">
+                  <Label>วันหมดอายุวีซ่า</Label>
+                  <Input v-model="form.visaExpiry" type="date" />
+                </div>
+                <div class="space-y-1 col-span-2">
+                  <Label>วันที่เข้าประเทศ</Label>
+                  <Input v-model="form.entryDate" type="date" />
+                </div>
+              </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1">

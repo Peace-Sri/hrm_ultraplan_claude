@@ -57,7 +57,7 @@ function onSubmit(ev: Event) {
   ev.preventDefault()
   if (!auth.currentEmployee) return
   if (totalDays.value === 0) {
-    toast.error('Selected dates include only weekends/holidays.')
+    toast.error(t('leave.selectOnlyHolidays'))
     return
   }
   try {
@@ -69,7 +69,7 @@ function onSubmit(ev: Event) {
       totalDays: totalDays.value,
       reason: reason.value,
     })
-    toast.success('Leave request submitted')
+    toast.success(t('leave.submitted'))
     router.replace('/leave/my')
   } catch (err) {
     toast.error(err instanceof Error ? err.message : String(err))
@@ -83,16 +83,16 @@ function onSubmit(ev: Event) {
       <ArrowLeft class="h-4 w-4 mr-1" />
       {{ t('common.back') }}
     </Button>
-    <PageHeader title="Apply Leave" />
+    <PageHeader :title="t('leave.apply')" />
 
     <Card class="max-w-2xl">
       <CardHeader>
-        <CardTitle>New Leave Request</CardTitle>
+        <CardTitle>{{ t('leave.newRequest') }}</CardTitle>
       </CardHeader>
       <CardContent>
         <form class="space-y-4" @submit="onSubmit">
           <div class="space-y-2">
-            <Label>Leave Type</Label>
+            <Label>{{ t('leave.leaveType') }}</Label>
             <Select v-model="leaveTypeKey">
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -108,23 +108,23 @@ function onSubmit(ev: Event) {
 
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-2">
-              <Label>Start Date</Label>
+              <Label>{{ t('leave.startDate') }}</Label>
               <Input v-model="startDate" type="date" required />
             </div>
             <div class="space-y-2">
-              <Label>End Date</Label>
+              <Label>{{ t('leave.endDate') }}</Label>
               <Input v-model="endDate" type="date" :min="startDate" required />
             </div>
           </div>
 
           <div class="p-3 rounded-md bg-muted text-sm">
-            <span class="font-semibold">{{ totalDays }}</span> business day{{ totalDays !== 1 ? 's' : '' }}
-            <span class="text-muted-foreground ml-2">(excluding weekends + Thai holidays)</span>
+            <span class="font-semibold">{{ totalDays }}</span> {{ t('leave.days') }}
+            <span class="text-muted-foreground ml-2">{{ t('leave.businessDaysNote') }}</span>
           </div>
 
           <div class="space-y-2">
-            <Label>Reason</Label>
-            <Textarea v-model="reason" rows="3" placeholder="Tell your manager why..." required />
+            <Label>{{ t('leave.reason') }}</Label>
+            <Textarea v-model="reason" rows="3" :placeholder="t('leave.reasonPlaceholder')" required />
           </div>
 
           <div class="flex gap-2 justify-end pt-2">

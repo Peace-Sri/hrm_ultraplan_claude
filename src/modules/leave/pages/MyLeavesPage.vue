@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { Plus, X } from 'lucide-vue-next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,6 +22,7 @@ import { useLocale } from '@/composables/useLocale'
 import { toast } from 'vue-sonner'
 import type { ID } from '@/types/common'
 
+const { t } = useI18n()
 const router = useRouter()
 const leave = useLeaveStore()
 const auth = useAuthStore()
@@ -64,11 +66,11 @@ function onCancel(id: ID<'LVR'>) {
 
 <template>
   <div>
-    <PageHeader title="My Leaves">
+    <PageHeader :title="t('leave.myLeaves')">
       <template #actions>
         <Button @click="router.push('/leave/apply')">
           <Plus class="mr-2 h-4 w-4" />
-          Apply Leave
+          {{ t('leave.apply') }}
         </Button>
       </template>
     </PageHeader>
@@ -85,8 +87,8 @@ function onCancel(id: ID<'LVR'>) {
           </div>
           <div class="text-2xl font-bold">{{ remaining(b) }}</div>
           <div class="text-xs text-muted-foreground">
-            / {{ b.entitledDays }} days
-            <span v-if="b.pendingDays > 0" class="text-orange-600">(+{{ b.pendingDays }} pending)</span>
+            / {{ b.entitledDays }} {{ t('leave.days') }}
+            <span v-if="b.pendingDays > 0" class="text-orange-600">(+{{ b.pendingDays }} {{ t('leave.pending') }})</span>
           </div>
         </CardContent>
       </Card>
@@ -94,18 +96,18 @@ function onCancel(id: ID<'LVR'>) {
 
     <Card>
       <CardHeader>
-        <CardTitle>Leave History</CardTitle>
+        <CardTitle>{{ t('leave.leaveHistory') }}</CardTitle>
       </CardHeader>
       <CardContent class="pt-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Type</TableHead>
-              <TableHead>Dates</TableHead>
-              <TableHead>Days</TableHead>
-              <TableHead>Reason</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{{ t('leave.table.type') }}</TableHead>
+              <TableHead>{{ t('leave.table.dates') }}</TableHead>
+              <TableHead>{{ t('leave.days') }}</TableHead>
+              <TableHead>{{ t('leave.reason') }}</TableHead>
+              <TableHead>{{ t('employee.table.status') }}</TableHead>
+              <TableHead>{{ t('common.actions') }}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -119,7 +121,7 @@ function onCancel(id: ID<'LVR'>) {
               <TableCell>{{ r.totalDays }}</TableCell>
               <TableCell class="max-w-xs truncate">{{ r.reason }}</TableCell>
               <TableCell>
-                <Badge :variant="statusVariant[r.status]">{{ r.status }}</Badge>
+                <Badge :variant="statusVariant[r.status]">{{ t(`leave.status.${r.status}`) }}</Badge>
               </TableCell>
               <TableCell>
                 <Button
@@ -134,7 +136,7 @@ function onCancel(id: ID<'LVR'>) {
             </TableRow>
             <TableRow v-if="myRequests.length === 0">
               <TableCell colspan="6" class="text-center py-8 text-muted-foreground">
-                No leave requests yet.
+                {{ t('leave.noHistory') }}
               </TableCell>
             </TableRow>
           </TableBody>

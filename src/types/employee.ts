@@ -5,6 +5,18 @@ export type TitleEn = 'Mr' | 'Mrs' | 'Ms'
 export type Gender = 'male' | 'female' | 'other'
 export type EmployeeStatus = 'active' | 'inactive' | 'terminated'
 export type BankCode = 'SCB' | 'KBANK' | 'BBL' | 'KTB' | 'TTB' | 'BAY'
+export type Nationality = 'TH' | 'MM' | 'KH' | 'LA' | 'VN' | 'OTHER'
+export type VisaType = 'Non-B' | 'Non-ED' | 'Non-O' | 'LTR' | 'Smart' | 'Other'
+
+export interface ForeignDocuments {
+  workPermitNo?: string // บัตรชมพู / WP
+  workPermitExpiry?: string // ISODate
+  passportNo?: string
+  passportExpiry?: string // ISODate
+  visaType?: VisaType
+  visaExpiry?: string // ISODate
+  entryDate?: string // ISODate เข้าประเทศ
+}
 
 export interface Address {
   addressLine: string
@@ -37,7 +49,9 @@ export interface Employee {
   firstNameEn: string
   lastNameEn: string
   nicknameTh?: string
-  thaiId: string // 13 digits, Mod-11 validated
+  nationality: Nationality
+  thaiId?: string // 13 digits, Mod-11 validated (required if nationality === 'TH')
+  foreign?: ForeignDocuments // required if nationality !== 'TH'
   dob: ISODate
   gender: Gender
   email: string
