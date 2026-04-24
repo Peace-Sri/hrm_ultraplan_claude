@@ -1,644 +1,869 @@
-# Plan v2 (Refined): HRM POC — Vue 3 + Vite + shadcn-vue + Tailwind
+# PLAN — HRM POC (Ultraplan refined)
 
-> **Refined จาก v1** โดยรวม feedback จาก 3 specialized agents (Architecture, Scope/Feasibility, Thai HR Domain) — เพื่อความแม่นยำและ realistic
+> **Stack:** Vite + Vue 3 (TS, `<script setup>`) + shadcn-vue + **Tailwind v3.4.17** + Pinia (persisted) + Vue Router 4 + vue-i18n 9 + vee-validate/zod + vue-chartjs + xlsx + jspdf.
 >
-> **⚠️ หมายเหตุ:** การ refine นี้ **ไม่ใช่ Ultraplan ของ Anthropic** แต่เป็น multi-agent review workflow ที่ทำใน CLI — ได้ผลลัพธ์คล้ายแต่ไม่ใช่ product เดียวกัน
-
-## 📝 สรุปการเปลี่ยนแปลงจาก v1
-
-| ประเด็น | v1 | v2 (Refined) | เหตุผล |
-|---|---|---|---|
-| Tailwind | v4 | **v3.4.x** | v4 ใหม่เกินไป — ลด debug risk ใน POC |
-| State storage | localStorage ทุก store | **localStorage + IndexedDB แบบ selective** | Attendance × 90 วัน × 50 คน ใหญ่เกิน localStorage 5-10MB |
-| Excel | `xlsx` | **`exceljs`** | `xlsx` มี known CVE |
-| API pattern | Store เขียนตรง mock | **Repository pattern + `src/lib/api/`** | เปลี่ยน backend ภายหลังไม่ต้อง rewrite store |
-| i18n | Monolithic `th.json` | **Per-module locales + lazy merge** | 1,200+ keys ในไฟล์เดียวไม่ scale |
-| Scope | 6 modules full (10-15 ชม.) | **MVP cut 15-20 ชม. + deferred list** | Original scope ~30-45 ชม. จริงๆ |
-| Thai tax | "simplified" | **8-bracket progressive ถูกต้อง + deductions ครบ** | Domain accuracy สำคัญ |
-| OT rates | Single multiplier | **Weekday 1.5x / Holiday 2x / Holiday OT 3x** | ตรงตาม กม. แรงงานไทย |
-| SS cap | ไม่ระบุ | **MIN(salary, 15,000) × 5% = max 750฿** | ตรง กฎ ประกันสังคม |
-| Missing infra | หลายรายการ | **เพิ่ม ESLint/Prettier/ErrorBoundary/logger/guards** | Production-grade baseline |
+> **Target:** Demoable HRM POC for Thai SMEs, inspired by HumanSoft / Bplus / Prosoft HRMI. 6 core modules + ESS + approvals + notifications + settings. TH/EN. Mock data persisted in localStorage + IndexedDB.
+>
+> **Scope tier:** A+B (~13.5 hrs). A = non-negotiable demo path. B = polish (forms, states, inbox, Thai ID validation). C deferred.
+>
+> **Status:** Phase 0 (git scaffold) done on commit `3e2340c`. Next: Phase 1 project setup.
 
 ---
 
-## Context
-สร้างโปรแกรม HRM (Human Resource Management) POC ในโฟลเดอร์
-`/Users/peace/Desktop/work/rws/poc/hrm`
-ได้แรงบันดาลใจจาก **HumanSoft + Bplus HRM + Prosoft HRMI**
+## § 1. Tech stack (locked)
 
-**เป้าหมาย:**
-- Scope: **MVP Core Modules** (ทำ 7 flow หลักให้เสร็จสมบูรณ์ ก่อนเพิ่ม feature อื่น)
-- **ทุกปุ่มกดได้ + ทุก action ทำงาน** (no dead buttons)
-- รองรับภาษา TH + EN
-- Mock data ผ่าน Pinia + persist แบบ selective
-- **Thai HR domain ถูกต้อง** (tax, SS, OT, leave per กม.แรงงาน)
-
----
-
-## 🛠️ Tech Stack (Final Versions)
-
-```json
-{
-  "dependencies": {
-    "vue": "^3.5.13",
-    "vue-router": "^4.5.0",
-    "pinia": "^2.3.0",
-    "pinia-plugin-persistedstate": "^4.1.3",
-    "vue-i18n": "^9.14.2",
-    "@tanstack/vue-table": "^8.21.2",
-    "vue-chartjs": "^5.3.2",
-    "chart.js": "^4.4.7",
-    "vee-validate": "^4.15.0",
-    "@vee-validate/zod": "^4.15.0",
-    "zod": "^3.24.1",
-    "exceljs": "^4.4.0",
-    "jspdf": "^2.5.2",
-    "jspdf-autotable": "^3.8.4",
-    "lucide-vue-next": "^0.468.0",
-    "date-fns": "^4.1.0",
-    "idb-keyval": "^6.2.1",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^2.5.5"
-  },
-  "devDependencies": {
-    "vite": "^6.0.7",
-    "typescript": "~5.6.3",
-    "@vitejs/plugin-vue": "^5.2.1",
-    "vue-tsc": "^2.2.0",
-    "tailwindcss": "^3.4.17",
-    "postcss": "^8.4.49",
-    "autoprefixer": "^10.4.20",
-    "@types/node": "^22.10.5",
-    "eslint": "^9.17.0",
-    "eslint-plugin-vue": "^9.32.0",
-    "@vue/eslint-config-typescript": "^14.2.0",
-    "prettier": "^3.4.2"
-  }
-}
-```
-
-**Node:** 20.x (pin via `.nvmrc`)
+| หมวด | Library | Note |
+|---|---|---|
+| Build tool | Vite | — |
+| Framework | Vue 3 Composition API | — |
+| Language | TypeScript | `strict: true` |
+| UI | shadcn-vue | Minimum 18 components (see § 9) |
+| CSS | **Tailwind v3.4.17** | v4 rejected — shadcn-vue CLI still targets v3 |
+| Routing | vue-router 4 | — |
+| State | Pinia + `pinia-plugin-persistedstate` | localStorage for app/auth/notif |
+| Large-state storage | `idb-keyval` | IndexedDB for attendance/payroll |
+| i18n | vue-i18n 9 | Per-module namespaces; Intl for dates/money |
+| Icons | lucide-vue-next | — |
+| Forms | vee-validate + @vee-validate/zod + zod | — |
+| Tables | @tanstack/vue-table + shadcn table | — |
+| Charts | vue-chartjs + chart.js | — |
+| Export | xlsx, jspdf, jspdf-autotable | NotoSansThai bundled base64 |
+| Toast | shadcn-vue Sonner | — |
+| Rand seed | seedrandom | Deterministic mock data |
+| Tests | Vitest | ~1 hr of Thai-domain tests |
 
 ---
 
-## 🎯 Scope: MVP (15-20 ชม.) + Deferred List
+## § 2. Data model (TypeScript)
 
-### ✅ MVP — Demo-Critical Flows (จะ build ให้เสร็จสมบูรณ์)
+### Conventions
 
-| # | Flow | Persona | Screens |
-|---|---|---|---|
-| 1 | **Login + Role Switcher** | ทุก role | LoginPage, user menu, role badge |
-| 2 | **Dashboard** | ทุก role | KPI cards (4), 1 chart (attendance trend), recent activity |
-| 3 | **Employee CRUD** | HR | List (sort/filter/search/pagination), Detail, Add/Edit form (single step, ไม่ใช่ wizard), Delete |
-| 4 | **Clock In/Out (GPS)** | Employee | Clock page (GPS real), My Attendance list |
-| 5 | **Apply Leave → Approve** | Employee → Manager | Apply form, My Leaves, Approval Queue, Approve/Reject |
-| 6 | **Payslip + PDF** | Employee | My Payslip view, Historical list, Download PDF (with Thai tax/SS/PVD คำนวณถูก) |
-| 7 | **Notifications + Approval Inbox** | ทุก role | Bell dropdown, Toast, Global Approval Inbox |
+- **IDs:** prefixed opaque strings — `EMP-00042`, `DEPT-03`, `POS-SR-DEV`, `ATT-2026-04-24-EMP-00042`, `LVR-2026-Q2-0017`, `PAY-2026-04-EMP-00042`, `APR-LVR-0017`, `NTF-00123`.
+- **Money:** integer **satang** (1 THB = 100 satang). Never float. Display layer divides by 100.
+- **Timestamps:** ISO-8601 strings in storage (`2026-04-24T08:30:00+07:00`). Hydrate to `Date` only in components.
+- **Enums:** string literal unions (tree-shakes better, serializes cleanly).
+- **Relationships:** foreign keys only; joins happen in composables/getters.
+- **Soft delete:** `status` field, no hard deletes.
 
-### 🗓️ Demo Script (7 screens flawless)
-```
-1. Login เป็น Employee (สมชาย)
-   → 2. Clock In (GPS โชว์พิกัด + office distance)
-   → 3. Apply Leave (ลาป่วย 1 วัน)
-4. สลับ role เป็น Manager
-   → 5. Approval Queue → Approve ใบลา
-6. สลับ role เป็น HR
-   → 7. ดู Employee List + Download Payslip PDF
-```
-
-### 🔄 Supporting (ต้องทำครบเพื่อให้ flow MVP ทำงาน)
-- Auth store + role-based menu
-- Notification store + Toast system
-- i18n TH/EN ทุกหน้า
-- Theme light/dark + persist
-- Router guards ตาม role
-- Seed data (50 พนักงาน × 90 วัน attendance/leave + 3 เดือน payroll)
-- Global error handler
-- Loading/Empty/Error states ทุกหน้า
-- Confirmation dialogs ทุก destructive action
-
-### ⏸️ Deferred (เก็บไว้ทำต่อหลัง MVP ผ่าน review)
-- Multi-step Employee wizard (ใช้ single form ก่อน)
-- Organization Chart tree view
-- Face Recognition + Fingerprint mock
-- Shift Management + Roster Calendar
-- Leave Types CRUD settings
-- Tax Summary ภ.ง.ด.1 export
-- Payroll Run full UI (batch calculate for all employees)
-- Excel Import
-- Expense Claims
-- Bulk actions + bulk delete
-- Company settings, notification preferences
-- Announcements
-- Organization structure (multi-level)
-- Career Path
-
----
-
-## 🇹🇭 Thai HR Domain Layer (NEW — Critical)
-
-### `src/lib/thai-tax.ts` — Progressive tax engine (2026 brackets)
+### Interfaces (in `src/types/`)
 
 ```typescript
-export const TAX_BRACKETS = [
-  { min: 0,         max: 150_000,   rate: 0    },
-  { min: 150_001,   max: 300_000,   rate: 0.05 },
-  { min: 300_001,   max: 500_000,   rate: 0.10 },
-  { min: 500_001,   max: 750_000,   rate: 0.15 },
-  { min: 750_001,   max: 1_000_000, rate: 0.20 },
-  { min: 1_000_001, max: 2_000_000, rate: 0.25 },
-  { min: 2_000_001, max: 5_000_000, rate: 0.30 },
-  { min: 5_000_001, max: Infinity,  rate: 0.35 },
-];
+// common.ts
+export type ID<T extends string> = `${T}-${string}`;
+export type ISODate = string;       // "2026-04-24"
+export type ISODateTime = string;   // "2026-04-24T08:30:00+07:00"
+export type Satang = number;        // integer
 
-export const ALLOWANCES = {
-  self:            60_000,
-  spouse:          60_000,
-  childFirstBorn:  30_000,
-  childSecondPlus: 60_000,   // born ≥ 2018
-  parent:          30_000,
-  disabled:        60_000,
-};
+// user.ts
+export type RoleKey = 'hr_admin' | 'manager' | 'employee';
 
-export const EXPENSE_DEDUCTION = { rate: 0.5, cap: 100_000 };
-export const SSO = { rate: 0.05, baseFloor: 1_650, baseCeiling: 15_000 };
-
-export function calculateMonthlyNet(emp, month, attendance, leave) {
-  const grossEarnings = emp.baseSalary
-    + sumOT(attendance, { weekday: 1.5, holidayReg: 2, holidayOT: 3 })
-    + emp.monthlyAllowances
-    + (month.bonus || 0);
-
-  const sso = Math.min(emp.baseSalary, SSO.baseCeiling) * SSO.rate;   // max 750
-  const pvd = emp.baseSalary * emp.pvdRate;                            // 0.03–0.15
-
-  // Annualized tax calculation
-  const annualGross = grossEarnings * 12;
-  const expenseDed = Math.min(annualGross * EXPENSE_DEDUCTION.rate, EXPENSE_DEDUCTION.cap);
-  const personalDed = ALLOWANCES.self
-    + (emp.allowances.spouse ? ALLOWANCES.spouse : 0)
-    + emp.allowances.childrenBornBefore2018 * ALLOWANCES.childFirstBorn
-    + emp.allowances.childrenBornAfter2018 * ALLOWANCES.childSecondPlus
-    + emp.allowances.parents * ALLOWANCES.parent
-    + (emp.allowances.disabled * ALLOWANCES.disabled)
-    + (sso * 12) + (pvd * 12)
-    + Math.min(emp.allowances.lifeInsurance || 0, 100_000)
-    + Math.min(emp.allowances.homeLoanInterest || 0, 100_000);
-
-  const taxable = Math.max(0, annualGross - expenseDed - personalDed);
-  const annualTax = applyBrackets(taxable, TAX_BRACKETS);
-  const monthlyTax = annualTax / 12;
-
-  const absenceDed = (emp.baseSalary / workingDaysInMonth(month)) * countUnpaidLeave(leave);
-
-  return {
-    grossEarnings,
-    deductions: { sso, pvd, tax: monthlyTax, absence: absenceDed },
-    netPay: grossEarnings - sso - pvd - monthlyTax - absenceDed,
-  };
-}
-```
-
-### `src/lib/thai-id.ts` — Mod-11 checksum validator
-
-```typescript
-export function validateThaiID(id: string): boolean {
-  const d = id.replace(/-/g, '').split('').map(Number);
-  if (d.length !== 13) return false;
-  let sum = 0;
-  for (let i = 0; i < 12; i++) sum += d[i] * (13 - i);
-  return ((11 - (sum % 11)) % 10) === d[12];
+export interface Role {
+  key: RoleKey;
+  labelTh: string; labelEn: string;
+  permissions: PermissionKey[];
 }
 
-export function formatThaiID(id: string): string {
-  const d = id.replace(/-/g, '');
-  return `${d[0]}-${d.slice(1,5)}-${d.slice(5,10)}-${d.slice(10,12)}-${d[12]}`;
+export interface User {
+  id: ID<'USR'>;
+  employeeId: ID<'EMP'>;
+  username: string;
+  passwordHash: string;   // POC-only; never ship
+  roleKeys: RoleKey[];
+  activeRoleKey: RoleKey;
+  lastLoginAt?: ISODateTime;
 }
 
-export function generateValidThaiID(): string { /* for seed data */ }
-```
+// org.ts
+export interface Department {
+  id: ID<'DEPT'>;
+  nameTh: string; nameEn: string;
+  parentId?: ID<'DEPT'>;
+  managerId?: ID<'EMP'>;
+  costCenter: string;
+}
 
-### `src/lib/thai-date.ts` — Buddhist Era helper
+export interface Position {
+  id: ID<'POS'>;
+  titleTh: string; titleEn: string;
+  level: 'entry' | 'junior' | 'senior' | 'lead' | 'manager' | 'director';
+  minSalary: Satang; maxSalary: Satang;
+}
 
-```typescript
-export const toBE = (ce: number) => ce + 543;
-export const fromBE = (be: number) => be - 543;
-export function formatDate(date: Date, useBE = false, locale = 'th'): string { /* ... */ }
-```
-
-### `src/lib/thai-holidays.ts` — Public holidays 2026
-
-```typescript
-export const THAI_HOLIDAYS_2026 = [
-  { date: '2026-01-01', name: 'วันขึ้นปีใหม่', nameEn: 'New Year' },
-  { date: '2026-02-13', name: 'วันมาฆบูชา', nameEn: 'Makha Bucha' },
-  { date: '2026-04-06', name: 'วันจักรี', nameEn: 'Chakri Day' },
-  { date: '2026-04-13', name: 'วันสงกรานต์', nameEn: 'Songkran' },
-  { date: '2026-04-14', name: 'วันสงกรานต์', nameEn: 'Songkran' },
-  { date: '2026-04-15', name: 'วันสงกรานต์', nameEn: 'Songkran' },
-  { date: '2026-05-01', name: 'วันแรงงาน', nameEn: 'Labour Day' },
-  { date: '2026-05-04', name: 'วันฉัตรมงคล', nameEn: 'Coronation Day' },
-  { date: '2026-05-11', name: 'วันวิสาขบูชา', nameEn: 'Visakha Bucha' },
-  { date: '2026-06-03', name: 'วันเฉลิมพระชนมพรรษา พระราชินี', nameEn: 'Queen\'s Birthday' },
-  { date: '2026-07-10', name: 'วันอาสาฬหบูชา', nameEn: 'Asahna Bucha' },
-  { date: '2026-07-11', name: 'วันเข้าพรรษา', nameEn: 'Khao Phansa' },
-  { date: '2026-07-28', name: 'วันเฉลิมพระชนมพรรษา ร.10', nameEn: 'King\'s Birthday' },
-  { date: '2026-08-12', name: 'วันแม่', nameEn: 'Mother\'s Day' },
-  { date: '2026-10-13', name: 'วันคล้ายสวรรคต ร.9', nameEn: 'King Bhumibol Memorial' },
-  { date: '2026-10-23', name: 'วันปิยมหาราช', nameEn: 'Chulalongkorn Day' },
-  { date: '2026-12-05', name: 'วันพ่อ', nameEn: 'Father\'s Day' },
-  { date: '2026-12-10', name: 'วันรัฐธรรมนูญ', nameEn: 'Constitution Day' },
-  { date: '2026-12-31', name: 'วันสิ้นปี', nameEn: 'NYE' },
-];
-```
-
-### Employee schema additions (Thai-specific)
-
-```typescript
+// employee.ts
 export interface Employee {
-  id: string;
+  id: ID<'EMP'>;
+  employeeNo: string;                           // human "EMP00042"
   titleTh: 'นาย' | 'นาง' | 'นางสาว';
   titleEn: 'Mr' | 'Mrs' | 'Ms';
   firstNameTh: string; lastNameTh: string;
   firstNameEn: string; lastNameEn: string;
-  nicknameTh?: string;                   // ชื่อเล่น — Thai HR standard
-  thaiId: string;                         // validated 13-digit
-  dob: Date;
-  isProbation: boolean;                   // < 119 days
-  probationEndDate?: Date;
-
-  baseSalary: number;
-  monthlyAllowances: number;
-  pvdRate: number;                        // 0.03–0.15
+  nicknameTh?: string;
+  thaiId: string;                               // 13 digits, Mod-11 validated
+  dob: ISODate;
+  gender: 'male' | 'female' | 'other';
+  email: string; phone: string;
+  address: {
+    addressLine: string; tambon: string; amphoe: string;
+    changwat: string; zipCode: string;
+  };
+  departmentId: ID<'DEPT'>;
+  positionId: ID<'POS'>;
+  managerId?: ID<'EMP'>;
+  startDate: ISODate;
+  probationEndDate?: ISODate;                   // startDate + 119 days
+  status: 'active' | 'inactive' | 'terminated';
+  terminationDate?: ISODate;
+  terminationReason?: string;
+  baseSalary: Satang;
+  monthlyAllowances: Satang;
+  pvdRate: number;                              // 0.03 – 0.15
   bankCode: 'SCB' | 'KBANK' | 'BBL' | 'KTB' | 'TTB' | 'BAY';
-  bankAccount: string;                    // 10-digit
-
-  allowances: {
-    spouse: boolean;
+  bankAccount: string;
+  taxAllowances: {
+    hasSpouse: boolean;
     childrenBornBefore2018: number;
     childrenBornAfter2018: number;
     parents: number;
     disabled: number;
-    lifeInsurance?: number;               // cap 100k
-    homeLoanInterest?: number;            // cap 100k
+    lifeInsurance: Satang;
+    healthInsurance: Satang;
+    homeLoanInterest: Satang;
+    rmf: Satang;
+    ssf: Satang;
   };
+  photoUrl?: string;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
 
-  departmentId: string;
-  positionId: string;
-  managerId?: string;
-  startDate: Date;
-  status: 'active' | 'inactive' | 'terminated';
+// shift.ts
+export interface Shift {
+  id: ID<'SFT'>;
+  nameTh: string; nameEn: string;
+  startTime: string;                            // "08:30"
+  endTime: string;                              // "17:30"
+  breakMinutes: number;                         // 60
+  lateGraceMinutes: number;                     // 15
+  isOvernight: boolean;
+}
+
+export interface EmployeeShiftAssignment {
+  id: ID<'ESA'>;
+  employeeId: ID<'EMP'>;
+  shiftId: ID<'SFT'>;
+  effectiveFrom: ISODate;
+  effectiveTo?: ISODate;
+}
+
+// attendance.ts
+export type AttendanceMethod = 'gps' | 'wifi' | 'face_mock' | 'fingerprint_mock' | 'manual';
+export type AttendanceStatus = 'present' | 'late' | 'absent' | 'leave' | 'holiday' | 'weekend';
+
+export interface AttendanceRecord {
+  id: ID<'ATT'>;
+  employeeId: ID<'EMP'>;
+  date: ISODate;
+  shiftId: ID<'SFT'>;
+  clockInAt?: ISODateTime;
+  clockInMethod?: AttendanceMethod;
+  clockInLat?: number; clockInLng?: number;
+  clockInDistanceMeters?: number;
+  clockOutAt?: ISODateTime;
+  clockOutMethod?: AttendanceMethod;
+  clockOutLat?: number; clockOutLng?: number;
+  clockOutDistanceMeters?: number;
+  status: AttendanceStatus;
+  lateMinutes: number;
+  workedMinutes: number;
+  otWeekdayMinutes: number;
+  otHolidayRegMinutes: number;
+  otHolidayExtraMinutes: number;
+  correctionRequestId?: ID<'COR'>;
+  notes?: string;
+}
+
+export interface AttendanceCorrectionRequest {
+  id: ID<'COR'>;
+  attendanceId: ID<'ATT'>;
+  employeeId: ID<'EMP'>;
+  proposedClockInAt?: ISODateTime;
+  proposedClockOutAt?: ISODateTime;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedBy?: ID<'EMP'>;
+  reviewedAt?: ISODateTime;
+}
+
+// leave.ts
+export type LeaveTypeKey = 'sick' | 'personal' | 'vacation' | 'maternity'
+  | 'paternity' | 'ordination' | 'unpaid' | 'bereavement';
+
+export interface LeaveType {
+  key: LeaveTypeKey;
+  nameTh: string; nameEn: string;
+  isPaid: boolean;
+  annualEntitlementDays: number;
+  maxConsecutiveDays?: number;
+  requiresAttachment: boolean;
+  carryOver: 'none' | 'capped' | 'unlimited';
+  carryOverCapDays?: number;
+  colorHex: string;
+}
+
+export interface LeaveBalance {
+  employeeId: ID<'EMP'>;
+  year: number;
+  leaveTypeKey: LeaveTypeKey;
+  entitledDays: number;
+  usedDays: number;
+  pendingDays: number;
+  carriedOverDays: number;
+  // remainingDays = entitled + carriedOver - used - pending (computed)
+}
+
+export interface LeaveRequest {
+  id: ID<'LVR'>;
+  employeeId: ID<'EMP'>;
+  leaveTypeKey: LeaveTypeKey;
+  startDate: ISODate;
+  endDate: ISODate;
+  totalDays: number;                            // business days, excl weekends/holidays
+  isHalfDay: boolean;
+  halfDayPeriod?: 'morning' | 'afternoon';
+  reason: string;
+  attachmentUrl?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  submittedAt: ISODateTime;
+  reviewedBy?: ID<'EMP'>;
+  reviewedAt?: ISODateTime;
+  reviewerComment?: string;
+}
+
+// payroll.ts
+export interface PayslipEarnings {
+  baseSalary: Satang;
+  monthlyAllowances: Satang;
+  otWeekday: Satang;
+  otHolidayReg: Satang;
+  otHolidayExtra: Satang;
+  bonus: Satang;
+  commission: Satang;
+  other: Satang;
+  grossTotal: Satang;                           // computed
+}
+
+export interface PayslipDeductions {
+  sso: Satang;
+  pvdEmployee: Satang;
+  withholdingTax: Satang;
+  unpaidLeaveDeduction: Satang;
+  lateDeduction: Satang;
+  loanRepayment: Satang;
+  other: Satang;
+  totalDeductions: Satang;                      // computed
+}
+
+export interface Payslip {
+  id: ID<'PAY'>;
+  employeeId: ID<'EMP'>;
+  payrollRunId: ID<'PYR'>;
+  periodYear: number;
+  periodMonth: number;
+  payDate: ISODate;
+  employeeSnapshot: {
+    employeeNo: string;
+    fullNameTh: string; fullNameEn: string;
+    departmentName: string; positionName: string;
+    bankCode: string; bankAccount: string;
+  };
+  earnings: PayslipEarnings;
+  deductions: PayslipDeductions;
+  netPay: Satang;
+  workedDays: number; absentDays: number;
+  otMinutesTotal: number;
+  generatedAt: ISODateTime;
+  status: 'draft' | 'finalized' | 'paid';
+}
+
+export interface PayrollRun {
+  id: ID<'PYR'>;
+  periodYear: number; periodMonth: number;
+  runDate: ISODateTime;
+  runBy: ID<'EMP'>;
+  status: 'draft' | 'finalized' | 'paid';
+  payslipIds: ID<'PAY'>[];
+  totalGross: Satang; totalNet: Satang;
+  totalTax: Satang; totalSSO: Satang;
+  bankFileGeneratedAt?: ISODateTime;
+  notes?: string;
+}
+
+// approval.ts
+export type ApprovalItemType = 'leave_request' | 'attendance_correction' | 'expense_claim';
+
+export interface ApprovalItem {
+  id: ID<'APR'>;
+  type: ApprovalItemType;
+  refId: ID<'LVR'> | ID<'COR'>;
+  requesterId: ID<'EMP'>;
+  approverId: ID<'EMP'>;
+  submittedAt: ISODateTime;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedAt?: ISODateTime;
+  reviewerComment?: string;
+  summary: { titleTh: string; titleEn: string; subtitle: string };
+}
+
+// notification.ts
+export type NotificationType =
+  | 'leave_submitted' | 'leave_approved' | 'leave_rejected'
+  | 'attendance_correction_submitted' | 'attendance_correction_reviewed'
+  | 'payslip_available' | 'announcement' | 'birthday' | 'probation_ending';
+
+export interface Notification {
+  id: ID<'NTF'>;
+  userId: ID<'USR'>;
+  type: NotificationType;
+  titleTh: string; titleEn: string;
+  bodyTh: string; bodyEn: string;
+  actionUrl?: string;
+  isRead: boolean;
+  createdAt: ISODateTime;
+  readAt?: ISODateTime;
 }
 ```
 
 ---
 
-## 👤 Role Matrix (Explicit — who sees what)
+## § 3. RBAC — permission matrix + enforcement
 
-| Page | HR Admin | Manager | Employee |
+### Permission keys (in `src/lib/permissions.ts`)
+
+```typescript
+export type PermissionKey =
+  // Employee
+  | 'employee.view_all' | 'employee.view_team' | 'employee.view_self'
+  | 'employee.create' | 'employee.edit' | 'employee.delete' | 'employee.export'
+  // Attendance
+  | 'attendance.clock_self'
+  | 'attendance.view_all' | 'attendance.view_team' | 'attendance.view_self'
+  | 'attendance.correct_any' | 'attendance.correct_self' | 'attendance.approve_corrections'
+  // Leave
+  | 'leave.apply_self'
+  | 'leave.view_all' | 'leave.view_team' | 'leave.view_self'
+  | 'leave.approve_team' | 'leave.cancel_any' | 'leave.cancel_self'
+  // Payroll
+  | 'payroll.run' | 'payroll.finalize' | 'payroll.export_bank_file'
+  | 'payslip.view_all' | 'payslip.view_team' | 'payslip.view_self'
+  // Approval inbox
+  | 'approval.view_all' | 'approval.view_team'
+  // Settings
+  | 'settings.company' | 'settings.users' | 'settings.profile_self';
+```
+
+### Role → permission matrix
+
+| Permission | HR Admin | Manager | Employee |
 |---|:---:|:---:|:---:|
-| Dashboard | ทั้งบริษัท | ทีมตัวเอง | ตัวเอง |
-| Employee List | ✅ ทั้งหมด | ✅ ทีม (read-only) | ❌ redirect to own profile |
-| Employee Add/Edit | ✅ | ❌ | ❌ |
-| Employee Delete | ✅ | ❌ | ❌ |
-| Clock In/Out | ✅ ของตัวเอง | ✅ ของตัวเอง | ✅ ของตัวเอง |
-| My Attendance | ✅ | ✅ | ✅ |
-| Team Attendance | ✅ ทั้งหมด | ✅ ทีมตัวเอง | ❌ |
-| Apply Leave | ✅ | ✅ | ✅ |
-| My Leaves | ✅ | ✅ | ✅ |
-| Approval Queue | ✅ ทั้งหมด | ✅ ทีมตัวเอง | ❌ |
-| My Payslip | ✅ ของตัวเอง | ✅ ของตัวเอง | ✅ ของตัวเอง |
-| Employee Payslips | ✅ ทั้งหมด | ❌ | ❌ |
-| Settings | ✅ | ✅ จำกัด | ✅ Profile เท่านั้น |
+| `employee.view_all` | ✅ | | |
+| `employee.view_team` | | ✅ | |
+| `employee.view_self` | ✅ | ✅ | ✅ |
+| `employee.create / edit / delete / export` | ✅ | | |
+| `attendance.clock_self` | ✅ | ✅ | ✅ |
+| `attendance.view_all` | ✅ | | |
+| `attendance.view_team` | | ✅ | |
+| `attendance.view_self` | ✅ | ✅ | ✅ |
+| `attendance.correct_self` | ✅ | ✅ | ✅ |
+| `attendance.approve_corrections` | ✅ | ✅ | |
+| `leave.apply_self` | ✅ | ✅ | ✅ |
+| `leave.view_all` | ✅ | | |
+| `leave.view_team` | | ✅ | |
+| `leave.view_self` | ✅ | ✅ | ✅ |
+| `leave.approve_team` | ✅ | ✅ | |
+| `payroll.run / finalize / export_bank_file` | ✅ | | |
+| `payslip.view_all` | ✅ | | |
+| `payslip.view_self` | ✅ | ✅ | ✅ |
+| `approval.view_all` | ✅ | | |
+| `approval.view_team` | | ✅ | |
+| `settings.company / users` | ✅ | | |
+| `settings.profile_self` | ✅ | ✅ | ✅ |
+
+### Three-layer enforcement
+
+1. **Router** — `meta.requiresPermission` on route definitions, checked in `permissionGuard`. ANY-of semantics for arrays. Redirects to `/forbidden`.
+2. **UI** — `<RoleGate :requires="['employee.edit']">...</RoleGate>` wraps buttons and sections. Uses `auth.hasPermission(p)`.
+3. **Store actions** — every mutating action calls `useAuthStore().requirePermission('...')` at top. Throws on missing. Prevents DevTools bypass.
+
+**Scope filter** (`view_team`): composable `useScopedQuery` auto-filters by `managerId === currentUser.employeeId` when team-only permission is the highest granted.
 
 ---
 
-## 📁 Folder Structure (Refined)
+## § 4. Thai business rules (spec'd in `src/lib/thai-rules.ts`)
+
+1. **Income tax brackets 2026** (annual net income):
+   - 0 – 150,000: 0%
+   - 150,001 – 300,000: 5%
+   - 300,001 – 500,000: 10%
+   - 500,001 – 750,000: 15%
+   - 750,001 – 1,000,000: 20%
+   - 1,000,001 – 2,000,000: 25%
+   - 2,000,001 – 5,000,000: 30%
+   - 5,000,001+: 35%
+2. **Expense deduction**: 50% of income, capped 100,000 THB/yr.
+3. **Personal allowances**: self 60k, spouse 60k (non-earning), child pre-2018 15k (+30k if still studying), child post-2018 60k, parent 30k each (aged ≥60, income <30k), disabled dependent 60k, life insurance ≤100k, health insurance ≤25k, home-loan interest ≤100k.
+4. **SSO (Social Security)**: 5% of salary, floor 1,650 / ceiling 15,000 THB → **min 82.50, max 750 THB/month**.
+5. **OT per LPA §61-63**:
+   - Weekday OT: **1.5×** hourly
+   - Holiday regular hours: **2.0×**
+   - Holiday OT (beyond normal hrs on holiday): **3.0×**
+   - Hourly wage = `monthlySalary / 240` (30 days × 8 hrs)
+6. **Late**: clock in > `shift.startTime + shift.lateGraceMinutes` (default 15 min). Flagged for HR review; no auto-deduction.
+7. **Leave entitlements (Thai LPA)**:
+   - Vacation: **6 days/yr** (POC grants at start; prorate mid-year hires `entitled × remainingMonths/12`)
+   - Sick: **30 days/yr paid**; medical cert for >3 consecutive days
+   - Personal (ลากิจ): **3 days/yr paid**
+   - Maternity: 98 days (POC shows as unpaid-by-company)
+   - Paternity: 15 days
+   - Ordination (บวช): 120 days unpaid
+   - Bereavement: 5 days (company policy)
+   - Unpaid: unlimited
+   - Rollover: **none** for POC.
+8. **Unpaid leave deduction**: `(baseSalary / workingDaysInMonth) × unpaidDays` where `workingDaysInMonth = calendar - weekends - Thai holidays`.
+9. **Withholding tax**: **annualized monthly** method — compute annual tax, divide by 12. No December true-up (flagged in comments).
+10. **Rounding**: compute in satang (integer); tax rounded DOWN to nearest 0.25 THB per Revenue Code §50.
+11. **Thai ID Mod-11**: sum of (digit × position weight 13→2) mod 11; check digit = (11 - sum) mod 10.
+12. **2026 public holidays** (19 dates) hard-coded in `src/lib/thai-holidays.ts`.
+
+**Deferred:** shift rotation, severance §118, PVD vesting, multi-level approval, RMF/SSF advice.
+
+---
+
+## § 5. Modules + Definition of Done (Tier A+B)
+
+### 🔐 Auth + Layout
+- Login with 3 quick-login buttons (HR Admin / Manager / Employee) + full form with validation
+- MainLayout: collapsible sidebar + header (search, bell, lang, theme, user menu)
+- Role switcher in header (demo only)
+- Route guards via `permissionGuard`
+- **DoD:**
+  - [ ] Quick-login switches persona in <300ms
+  - [ ] Logout clears persist; refresh → login
+  - [ ] Role switcher updates sidebar AND blocks forbidden routes
+  - [ ] Sidebar collapses at <1024px
+  - [ ] Dark mode persists across refresh
+
+### 📊 Dashboard
+- 4 role-scoped KPI cards (HR=all, Manager=team, Employee=self)
+- 7-day attendance trend (line chart)
+- Leave-by-type (pie chart)
+- Recent activities feed (≥10 events from seed)
+- Quick actions: Clock In/Out, Request Leave, View Payslip
+- **DoD:**
+  - [ ] All 4 KPIs render with role-scoped numbers
+  - [ ] Chart renders 7 days
+  - [ ] Quick actions navigate correctly
+  - [ ] Activity feed shows ≥10 events
+  - [ ] Empty state handled
+
+### 👥 Employee
+- List: DataTable with sort / filter (dept, status) / search (name, empNo, Thai ID) / paginate 25
+- Detail: 4 tabs (Personal / Work / Compensation / History)
+- Add/Edit form with zod validation + Thai ID Mod-11 check on blur
+- Delete → ConfirmDialog → soft delete (`status=terminated`)
+- **DoD:**
+  - [ ] Sort on name/dept/startDate works
+  - [ ] Thai ID Mod-11 shows red border + message on blur when invalid
+  - [ ] Delete goes through confirm dialog
+  - [ ] Excel export opens in Excel with TH+EN columns
+
+### ⏰ Attendance
+- Clock In/Out with real `navigator.geolocation` + distance from office
+- GPS denied → fallback "use mock location" button
+- Day states: Not-clocked → Working → Done (one-way)
+- My Attendance: calendar + list, color-coded status
+- Team Attendance (Manager/HR) with filters
+- Correction requests → approval queue
+- OT calc: weekday 1.5×, holiday 2× / 3× shown in tooltip
+- **DoD:**
+  - [ ] Clock in captures lat/lng + distance
+  - [ ] GPS denied path reachable
+  - [ ] State transitions enforce one-way/day
+  - [ ] Calendar color-coded
+  - [ ] OT tooltip explains multiplier
+
+### 🏖️ Leave
+- My Leaves + 8 leave-type balance cards (entitled/used/remaining)
+- Apply form: date range picker disabling weekends/holidays, shows computed business days
+- Team Calendar (month view)
+- Approval queue (Manager): approve/reject with comment
+- Cancel pending → refunds balance
+- **DoD:**
+  - [ ] Date picker disables weekends + Thai holidays
+  - [ ] Balance cards show all 8 types
+  - [ ] Submit → appears in both My Leaves + manager queue
+  - [ ] Approve → balance updates (optimistic + rollback)
+  - [ ] Cancel pending refunds balance
+
+### 💰 Payroll
+- My Payslip: month/year + BE/CE toggle, full earnings + deductions breakdown
+- Thai tax correctness: matches hand-calc for all 6 seeded salary-band reps
+- SSO: min(salary, 15000) × 5%, capped 750
+- PDF export with Thai rendering (NotoSansThai base64)
+- Payroll Run (HR): period pick → auto-calc from attendance+leave → preview → finalize
+- **DoD:**
+  - [ ] Payslip shows all earnings + deductions lines
+  - [ ] Tax matches hand-calc for 6 reps
+  - [ ] SSO capped at 750
+  - [ ] PDF opens in Chrome / Preview / Acrobat with Thai chars
+  - [ ] Payroll Run produces payslips for all active employees
+
+### 🔔 Notifications + Approval
+- Bell icon with unread badge
+- Dropdown: 10 most recent; click → navigate + mark read; mark-all-read
+- Sonner toast for in-session events
+- Global approval inbox: leave + attendance corrections, filter by type/status
+- **DoD:**
+  - [ ] Bell badge shows unread count
+  - [ ] Click notification navigates + marks read
+  - [ ] Mark-all-read clears badge
+  - [ ] Global inbox merges leave + corrections
+  - [ ] Toast appears on new event
+
+### 📱 ESS + Settings
+- ESS landing page linking to self-service flows (profile, leave, attendance, payslip)
+- Settings: language, theme, company info, profile, password (mock), notification prefs
+- **DoD:**
+  - [ ] Language toggle changes 100% of visible strings (no key leaks)
+  - [ ] Theme toggle covers all pages including charts/tables
+  - [ ] Profile edit updates header avatar without refresh
+
+**Tier C (deferred, time permitting):** org chart, Excel/PDF for all exports, employee delete UX polish, birthday widget, tax summary Excel, bank file CSV, expense claims, announcements, shift management, leave types CRUD, <640px mobile.
+
+---
+
+## § 6. Folder structure
 
 ```
 /Users/peace/Desktop/work/rws/poc/hrm/
-├── .nvmrc                          # 20.x
-├── .eslintrc.cjs
-├── .prettierrc
-├── .editorconfig
-├── components.json                 # shadcn-vue
-├── tailwind.config.js              # Tailwind v3 config
+├── public/
+├── src/
+│   ├── assets/
+│   ├── components/
+│   │   ├── ui/                         # shadcn-vue (auto-generated)
+│   │   ├── layout/                     # MainLayout, AppSidebar, AppHeader
+│   │   └── shared/                     # DataTable, ConfirmDialog, EmptyState, PageHeader, RoleGate
+│   ├── composables/
+│   │   ├── useAuth.ts
+│   │   ├── useNotification.ts
+│   │   ├── useGeolocation.ts
+│   │   ├── useLocale.ts                # Intl wrappers
+│   │   └── useScopedQuery.ts           # RBAC scope filter
+│   ├── i18n/
+│   │   ├── base/{th,en}.json
+│   │   ├── register.ts
+│   │   └── index.ts
+│   ├── lib/
+│   │   ├── utils.ts                    # cn() helper
+│   │   ├── permissions.ts              # PermissionKey taxonomy + matrix
+│   │   ├── thai-rules.ts               # tax / SSO / OT / LPA constants
+│   │   ├── thai-id.ts                  # Mod-11 validator
+│   │   ├── thai-holidays.ts            # 2026 dates
+│   │   ├── seed-names.ts               # hand-curated TH names
+│   │   ├── mock-seed.ts                # deterministic seed builder
+│   │   ├── seed-data.json              # committed output of mock-seed
+│   │   ├── format-money.ts             # Intl currency
+│   │   ├── format-date.ts              # Intl date (BE/CE)
+│   │   ├── export-excel.ts
+│   │   └── export-pdf.ts
+│   ├── modules/
+│   │   ├── auth/{stores,pages}
+│   │   ├── dashboard/pages
+│   │   ├── employee/{pages,stores,schemas,locales}
+│   │   ├── attendance/{pages,stores,schemas,locales}
+│   │   ├── leave/{pages,stores,schemas,locales}
+│   │   ├── payroll/{pages,stores,schemas,locales}
+│   │   ├── ess/pages
+│   │   ├── approval/{pages,stores,locales}
+│   │   └── settings/pages
+│   ├── router/{index.ts, guards.ts}
+│   ├── stores/
+│   │   ├── app.ts                      # theme, locale, dateSystem
+│   │   └── notification.ts
+│   ├── types/
+│   │   ├── common.ts
+│   │   ├── user.ts
+│   │   ├── org.ts
+│   │   ├── employee.ts
+│   │   ├── shift.ts
+│   │   ├── attendance.ts
+│   │   ├── leave.ts
+│   │   ├── payroll.ts
+│   │   ├── approval.ts
+│   │   └── notification.ts
+│   ├── App.vue
+│   ├── main.ts
+│   └── style.css                       # Tailwind + shadcn CSS vars
+├── tests/
+│   ├── thai-tax.test.ts
+│   ├── thai-id.test.ts
+│   ├── ot-calc.test.ts
+│   ├── leave-days.test.ts
+│   └── stores/*.test.ts                # one smoke test per store
+├── components.json
+├── tailwind.config.js                  # v3 config
 ├── postcss.config.js
-├── vite.config.ts                  # alias + manualChunks (chart/xlsx/jspdf)
-├── tsconfig.json                   # strict mode + path alias
 ├── index.html
 ├── package.json
-│
-├── public/
-│   └── office-map.png
-│
-└── src/
-    ├── main.ts
-    ├── App.vue
-    ├── style.css                   # @tailwind base/components/utilities
-    │
-    ├── lib/
-    │   ├── utils.ts                # cn() helper
-    │   ├── logger.ts               # dev-only console wrapper
-    │   ├── storage.ts              # IndexedDB wrapper (idb-keyval)
-    │   ├── export.ts               # Excel (exceljs) + PDF (jspdf)
-    │   ├── thai-tax.ts             # Progressive brackets + calc
-    │   ├── thai-id.ts              # 13-digit Mod-11 validator
-    │   ├── thai-date.ts            # BE / CE converter
-    │   ├── thai-holidays.ts        # Public holidays 2026
-    │   ├── mock-seed.ts            # Seed 50 employees + 90 days attendance + payroll
-    │   └── api/
-    │       ├── client.ts           # fake async wrapper (simulate latency)
-    │       ├── employee.repository.ts
-    │       ├── attendance.repository.ts
-    │       ├── leave.repository.ts
-    │       └── payroll.repository.ts
-    │
-    ├── composables/
-    │   ├── useAuth.ts
-    │   └── useAsyncData.ts         # loading/error/data pattern
-    │
-    ├── i18n/
-    │   ├── index.ts                # createI18n (legacy:false) + merge helper
-    │   └── base/                   # shared translations
-    │       ├── th.json
-    │       └── en.json
-    │
-    ├── stores/
-    │   ├── app.ts                  # theme, language (persist localStorage)
-    │   └── notification.ts         # in-memory + persist recent 50
-    │
-    ├── router/
-    │   ├── index.ts                # lazy imports
-    │   └── guards.ts               # auth + role guards
-    │
-    ├── types/
-    │   ├── api.ts
-    │   ├── employee.ts
-    │   ├── attendance.ts
-    │   ├── leave.ts
-    │   └── payroll.ts
-    │
-    ├── components/
-    │   ├── ui/                     # shadcn-vue auto-generated
-    │   ├── layout/
-    │   │   ├── MainLayout.vue
-    │   │   ├── AppSidebar.vue
-    │   │   └── AppHeader.vue
-    │   └── shared/
-    │       ├── DataTable.vue
-    │       ├── ConfirmDialog.vue
-    │       ├── EmptyState.vue
-    │       ├── LoadingState.vue
-    │       ├── ErrorState.vue
-    │       ├── ErrorBoundary.vue
-    │       ├── PageHeader.vue
-    │       └── RoleGate.vue        # conditional render by role
-    │
-    └── modules/
-        ├── auth/
-        │   ├── locales/{th,en}.json
-        │   ├── pages/LoginPage.vue
-        │   └── stores/auth.ts
-        ├── dashboard/
-        │   ├── locales/{th,en}.json
-        │   └── pages/DashboardPage.vue
-        ├── employee/
-        │   ├── locales/{th,en}.json
-        │   ├── pages/{List,Detail,AddEdit}.vue
-        │   ├── schemas/employee.ts
-        │   └── stores/employee.ts
-        ├── attendance/
-        │   ├── locales/{th,en}.json
-        │   ├── pages/{ClockInOut,MyAttendance,TeamAttendance}.vue
-        │   └── stores/attendance.ts
-        ├── leave/
-        │   ├── locales/{th,en}.json
-        │   ├── pages/{MyLeaves,ApplyLeave,ApprovalQueue}.vue
-        │   ├── schemas/leave.ts
-        │   └── stores/leave.ts
-        ├── payroll/
-        │   ├── locales/{th,en}.json
-        │   ├── pages/{MyPayslip,EmployeePayslips}.vue
-        │   └── stores/payroll.ts
-        ├── approval/
-        │   ├── locales/{th,en}.json
-        │   └── pages/ApprovalInbox.vue
-        └── settings/
-            ├── locales/{th,en}.json
-            └── pages/SettingsPage.vue
+├── tsconfig.json
+├── vite.config.ts
+├── vitest.config.ts
+└── README.md
 ```
-
-**ไฟล์ประมาณ:** ~45-55 Vue + ~25-30 TS
 
 ---
 
-## 🚧 Execution Plan v2 (Phase-by-Phase)
+## § 7. Execution plan — 13 phases (vertical-slice-first)
 
-### ✅ Phase 0: Git Setup (เสร็จแล้ว)
+| # | Phase | Hrs | Exit criterion |
+|---|---|---|---|
+| 1 | Project setup + tooling | 0.5 | `npm run dev/build/lint` green |
+| 2 | shadcn-vue minimum install (18 components) | 0.25 | Components registered in `src/components/ui` |
+| 3 | Core infrastructure | 2.0 | types + thai-rules + permissions + seed + i18n + router scaffolded |
+| 4 | **Vertical slice (end-to-end skeleton)** | 1.5 | Login → layout → all routes stubbed; role/lang/theme toggles all work |
+| 5 | Auth + layout polish | 0.75 | Real login UX + notification bell placeholder |
+| 6 | Dashboard (real) | 1.0 | KPIs + chart + activities from seed |
+| 7 | Employee CRUD (real) | 2.0 | List/detail/form/delete + Thai ID validator |
+| 8 | Attendance (real) | 2.0 | GPS clock + my/team views + OT calc |
+| 9 | Leave (real) | 1.5 | Apply/cancel + approval queue + balance |
+| 10 | Payroll (real) | 2.0 | Payslip + real Thai tax + PDF |
+| 11 | Notifications + approval inbox | 1.0 | Bell dropdown + toast + global inbox |
+| 12 | Settings + dark mode audit + responsive | 0.75 | All breakpoints + full i18n coverage |
+| 13 | Vitest domain tests + demo rehearsal | 0.75 | `npm test` green + full demo dry run |
 
-### Phase 1: Project Setup (~30 min)
+**Total: 13.5 hrs.** Demoable skeleton at hour 4.5.
+
+### Phase 1 — commands
+
 ```bash
 npm create vite@latest . -- --template vue-ts
 npm install
-npm install -D tailwindcss@^3.4.17 postcss autoprefixer @types/node@^22
-npm install -D eslint@^9 eslint-plugin-vue@^9.32 @vue/eslint-config-typescript@^14.2 prettier@^3
+# Tailwind v3
+npm install -D tailwindcss@3.4.17 postcss autoprefixer
 npx tailwindcss init -p
-
-# Core
-npm install vue-router@^4.5 pinia@^2.3 pinia-plugin-persistedstate@^4.1
-npm install vue-i18n@^9.14 lucide-vue-next@^0.468 date-fns@^4.1
-npm install vee-validate@^4.15 @vee-validate/zod@^4.15 zod@^3.24
-npm install @tanstack/vue-table@^8.21
+# shadcn-vue prerequisites
 npm install class-variance-authority clsx tailwind-merge
-npm install idb-keyval@^6.2
-
-# Charts + Export
-npm install vue-chartjs@^5.3 chart.js@^4.4
-npm install exceljs@^4.4 jspdf@^2.5 jspdf-autotable@^3.8
-
-# shadcn-vue
+npm install -D @types/node
+# Core
+npm install vue-router@4 pinia pinia-plugin-persistedstate vue-i18n@9
+npm install idb-keyval
+npm install lucide-vue-next date-fns
+npm install vee-validate @vee-validate/zod zod
+npm install @tanstack/vue-table
+# Charts + export
+npm install vue-chartjs chart.js
+npm install xlsx jspdf jspdf-autotable
+# Seed
+npm install seedrandom
+npm install -D @types/seedrandom
+# Tests
+npm install -D vitest @vue/test-utils happy-dom
+# shadcn-vue init
 npx shadcn-vue@latest init
 ```
 
-**Config files:**
-- `.nvmrc` (20)
-- `.eslintrc.cjs`, `.prettierrc`, `.editorconfig`
-- `vite.config.ts` — `@` alias + `manualChunks` for chart/exceljs/jspdf
-- `tsconfig.json` — strict + paths
-- `tailwind.config.js` (v3)
-- `src/style.css` — `@tailwind` directives + CSS vars
-- `src/lib/utils.ts` — `cn()` helper
+### Phase 2 — install only 18 components
 
-### Phase 2: shadcn-vue Components (~15 min)
 ```bash
-npx shadcn-vue@latest add button input label textarea select checkbox radio-group switch
-npx shadcn-vue@latest add card dialog alert-dialog sheet drawer
+npx shadcn-vue@latest add button input label textarea select checkbox
+npx shadcn-vue@latest add card dialog alert-dialog
 npx shadcn-vue@latest add table tabs badge avatar separator
-npx shadcn-vue@latest add dropdown-menu popover tooltip
-npx shadcn-vue@latest add sonner
-npx shadcn-vue@latest add form calendar date-picker
-npx shadcn-vue@latest add progress skeleton
-npx shadcn-vue@latest add command breadcrumb sidebar
+npx shadcn-vue@latest add dropdown-menu popover sonner
+npx shadcn-vue@latest add form calendar skeleton sidebar
 ```
 
-### Phase 3: Infrastructure Foundation (~2 hrs)
-- ESLint/Prettier configs + lint scripts
-- `src/lib/{logger,storage,utils}.ts`
-- `src/lib/thai-{tax,id,date,holidays}.ts` ✅ **Thai domain core**
-- `src/lib/api/client.ts` + `*.repository.ts`
-- `src/lib/mock-seed.ts` — **realistic seed**:
-  - 50 Thai employees (ชื่อไทย + อังกฤษ + ชื่อเล่น)
-  - 7 แผนก: ทรัพยากรบุคคล/บัญชี/ขาย/การตลาด/ไอที/ปฏิบัติการ/ผลิต
-  - Salaries 15k–150k (realistic distribution)
-  - 1 คนช่วง maternity, 1 probation, 1 high-earner (30% bracket demo)
-  - Valid Thai IDs (generate with correct Mod-11)
-  - Addresses: tambon/amphoe/changwat + zip
-  - Banks (SCB/KBank/BBL/KTB/TTB/BAY) + 10-digit account
-  - 90 วัน attendance (in/out + some late/OT/absent)
-  - 3 เดือน leave history
-  - 3 เดือน payroll history (consistent calc)
-  - Thai public holidays 2026
-- `src/i18n/index.ts` + per-module merge helper
-- `src/stores/{app,notification}.ts`
-- `src/router/{index,guards}.ts` — lazy imports + role guards
-- `src/composables/useAsyncData.ts`
-- `src/components/shared/{ErrorBoundary,EmptyState,LoadingState,ErrorState,ConfirmDialog,RoleGate}.vue`
-- Global error handler → notification store + Sonner
+**Skip:** radio-group, switch, sheet, drawer, progress, command, breadcrumb, tooltip, standalone date-picker.
 
-### Phase 4: Layout + Auth (~1.5 hrs)
-- `auth/stores/auth.ts` — `currentUser`, `currentRole`, `login()`, `logout()`, `switchRole()`
-- `auth/pages/LoginPage.vue` — form + **quick login buttons for 3 personas** (demo convenience)
-- `layout/MainLayout.vue` — responsive shell
-- `layout/AppSidebar.vue` — collapsible, role-based via `RoleGate`
-- `layout/AppHeader.vue` — notification bell, language switcher, theme toggle, user menu + **switch role dropdown**
+### Phase 3 — infrastructure deliverables
 
-### Phase 5: Dashboard (~1 hr)
-- 4 KPI cards (clickable → ไป module)
-- 1 chart (attendance trend 7 วัน — Chart.js line)
-- Recent activity feed (latest 10 events)
-- Quick Actions (Clock In, Apply Leave, View Payslip)
+Write these in order (each de-risks the next):
 
-### Phase 6: Employee Module (~2 hrs)
-- List: DataTable + sort + filter + search + pagination
-- Detail: tabbed (Personal / Work / Compensation / History)
-- Add/Edit form (single-page, zod validation):
-  - Thai ID validation on blur → show formatted + valid/invalid badge
-  - Bank account format validation
-  - PVD rate slider (3-15%)
-  - Allowances inputs
-- Delete with ConfirmDialog
-- Export to Excel (exceljs, dynamic import)
+1. `src/types/*.ts` — all interfaces from § 2
+2. `src/lib/permissions.ts` — PermissionKey + role matrix + helpers
+3. `src/lib/thai-rules.ts` — tax brackets, SSO, OT, LPA constants, `calculateMonthlyNet()`
+4. `src/lib/thai-id.ts` — Mod-11 validator
+5. `src/lib/thai-holidays.ts` — 2026 dates
+6. `src/lib/seed-names.ts` — TH name pools
+7. `src/lib/mock-seed.ts` — seed builder → `src/lib/seed-data.json`
+8. `src/lib/format-money.ts`, `format-date.ts` — Intl wrappers
+9. `src/i18n/{base/{th,en}.json, register.ts, index.ts}`
+10. `src/stores/{app.ts, notification.ts}`
+11. `src/modules/auth/stores/auth.ts`
+12. `src/router/{index.ts, guards.ts}` — all routes with `meta.requiresPermission`
+13. `src/main.ts` + `src/App.vue`
 
-### Phase 7: Attendance Module (~2 hrs)
-- Clock In/Out:
-  - Big status button (Not clocked / Working / On break / Done)
-  - Real-time clock
-  - **Real GPS via `navigator.geolocation`** → coords + distance from office
-  - Permission denied → fallback mock with clear error
-  - Success animation + toast
-- My Attendance: calendar + list toggle
-- Team Attendance: DataTable + date range
-- Business logic: OT (weekday 1.5x / holiday 2x / holiday OT 3x), late detection
+### Phase 4 — vertical slice
 
-### Phase 8: Leave Module (~1.5 hrs)
-- My Leaves: balance cards (sick/personal/vacation) + history
-- Apply Leave: date range picker + type + reason
-- Cancel pending
-- Approval Queue (Manager): list + quick approve/reject + comment
-- Leave entitlements per กม. แรงงาน (seed in types file)
+- Login page (mock — 3 quick-login buttons, no form validation polish yet)
+- MainLayout + AppSidebar + AppHeader + role switcher
+- Each top-level route wired with a **stub page**: title + "coming in phase X" card + one realistic placeholder
+- Bell stub with empty state
+- Theme + language toggles both functional
+- `permissionGuard` wired (Employee role → `/employees` redirects to `/ess`)
 
-### Phase 9: Payroll Module (~2 hrs)
-- My Payslip:
-  - Month/year selector (+ BE/CE toggle)
-  - Full breakdown (earnings + deductions) — Thai tax/SS/PVD คำนวณถูก
-  - Net pay with Baht formatting
-  - Download PDF (jsPDF + autoTable) ตาม LPA §75
-- Employee Payslips (HR): list + drilldown
-- Uses `thai-tax.ts` integrated with attendance + leave data
+### Phases 5-12 — swap stubs for real
 
-### Phase 10: Notifications + Approval Inbox (~1 hr)
-- Notification store: add/read/markAllRead, persist recent 50
-- Header bell: badge + dropdown
-- Click notification → navigate
-- Global Approval Inbox aggregates leave (extensible)
-- Toast on new event (Sonner)
+Each phase replaces stubs with full implementation following the § 5 DoD. Commit at end of each phase.
 
-### Phase 11: Settings + Polish (~45 min)
-- Settings: language, theme, profile edit
-- Dark mode audit
-- Responsive check (mobile/tablet/desktop)
+### Phase 13 — tests + demo rehearsal
 
-### Phase 12: Verification (~45 min)
-- `npm run build` — no TS/ESLint error
-- `npm run dev` — walk through **demo script 7 ขั้น**
-- Role matrix spot-check
-- Refresh persist test
-- Mobile simulator
-- Language switch mid-flow
-- Keyboard navigation
+- Write Vitest tests (§ 8)
+- Record full demo dry-run via screen capture; if it plays end-to-end without manual intervention, shippable
 
 ---
 
-## 🎨 UX State Checklist (apply per page)
+## § 8. Testing (Vitest only)
 
-ทุก list/page ต้องมีครบ:
-- [ ] Loading state (skeleton)
-- [ ] Empty state (พร้อม CTA)
-- [ ] Error state (พร้อมปุ่ม retry)
-- [ ] Success feedback (toast)
-- [ ] Confirmation dialog ก่อน destructive action (delete, logout, reject)
-- [ ] Optimistic update สำหรับ approve/reject (rollback on error)
-- [ ] Focus management ใน dialog
+```
+tests/thai-tax.test.ts    — 7 tests pinning values across all brackets
+tests/thai-id.test.ts     — valid + invalid Mod-11
+tests/ot-calc.test.ts     — weekday 1.5×, holiday reg 2×, holiday OT 3×
+tests/leave-days.test.ts  — weekend + Thai holiday exclusion
+tests/stores/*.test.ts    — 1 smoke test per store (load seed → action → assert state)
+```
 
----
+**Pinned payroll example:**
 
-## ✅ Verification (Expanded)
+```typescript
+test('Somchai (55k, spouse + 2 kids post-2018) — Apr 2026 net', () => {
+  const result = calculateMonthlyNet(seedEmp('EMP-00001'), 2026, 4, attendance, leave);
+  expect(result.deductions.sso).toBe(750_00);
+  expect(result.deductions.withholdingTax).toBe(/* hand-calced */);
+  expect(result.netPay).toBe(/* hand-calced */);
+});
+```
 
-1. **Build:** `npm run build` ผ่าน + bundle < 500KB main chunk gzipped
-2. **Lint:** `npm run lint` + `npm run format:check`
-3. **Demo script:** เดิน 7 ขั้น ไม่มี bug
-4. **Role matrix:** 3 roles × key pages match matrix
-5. **Thai domain:**
-   - Salary 30,000 → tax/SS/PVD ตรงสูตร manual
-   - Thai ID ผิด checksum → form reject
-   - Holiday OT × 3 ถูก
-   - BE date: 2026 → 2569
-6. **Persist:** refresh browser → data คงอยู่
-7. **i18n:** toggle TH↔EN ทุกหน้า ไม่มี missing key
-8. **Responsive:** 320px, 768px, 1280px
+No Playwright, no component tests. ~1 hr total.
 
 ---
 
-## ⚠️ Risks & Mitigations (v2)
+## § 9. Seed data spec
 
-| Risk | Impact | Mitigation |
+| Entity | Count | Notes |
 |---|---|---|
-| Scope creep "ทุกปุ่มกดได้" | เวลาล้น | MVP cut ชัดเจน + deferred list เป็น backlog |
-| Thai tax calc ผิด | Demo พัง | `thai-tax.ts` pure function + expected values in unit test-style comments |
-| Seed data inconsistent | Downstream bug | Generate once, verify cross-refs, snapshot to JSON |
-| IndexedDB quota | Attendance history หาย | Cap 90 days rolling + warn at >80% quota |
-| GPS permission denied | Clock in พัง | Fallback mock location + clear error |
-| Tailwind v3 vs shadcn-vue | Version mismatch | Pin shadcn-vue CLI + verify generated config |
-| exceljs bundle size | Slow load | Dynamic import on export click (vite manualChunks) |
+| Departments | 7 | HR 4, Finance 5, Sales 12, Marketing 6, IT 10, Ops 15, Prod 8 |
+| Positions | 18 | 2-3 per dept + exec tier |
+| Employees | **60** | 2 HR Admin, 8 Managers, 50 Employees |
+| Shifts | 3 | Standard 8:30-17:30, Early 6:00-15:00, Late 14:00-23:00 |
+| Attendance | ~5,400 | 60 × 90 days |
+| Leave requests | ~240 | avg 4/employee |
+| Leave balances | 480 | 60 × 8 types |
+| Payslips | 180 | 60 × 3 months |
+| Notifications | ~50 | spread across users |
+
+**Salary bands** (exercise every tax bracket): 20-25k×15, 25-40k×25, 40-65k×12, 65-100k×5, 100-150k×2, 200k×1.
+
+**Hand-crafted 5 edge cases:**
+- `EMP-00001` สมชาย ใจดี — HR Admin, 55k, spouse+2 kids post-2018 (canonical hero)
+- `EMP-00007` นภา สุวรรณ — IT Manager, 85k, 3 direct reports (approval demo)
+- `EMP-00042` วีรพล จันทร์เพ็ญ — Employee, **on probation** (started 60d ago)
+- `EMP-00050` ปิยะดา ทองคำ — Employee, **currently on maternity leave**
+- `EMP-00060` เอกชัย เศรษฐี — CEO, 200k, 30% bracket
+
+**Deterministic:** `seedrandom('hrm-poc-2026')` + hand-curated names → serialize once to `seed-data.json`. Enables pinned test values.
 
 ---
 
-## 🔓 Permissions ที่ขอไว้
-- `Bash(npm:*)`, `Bash(npx:*)`, `Bash(git:*)` ใน folder นี้
-- `Bash(ls/pwd/cat/mkdir)`
-- `Write/Edit` ในโฟลเดอร์ POC เท่านั้น
-- Network: npm registry
+## § 10. Pinia store surfaces (conventions)
+
+- Entity stores: `byId: Record<ID, T>` + `allIds: ID[]` (Redux entity-adapter style)
+- Actions always async; call through repositories (pure functions over JSON)
+- Getters for joined views; never store joins
+- **localStorage** for `app`, `auth`, `notification`
+- **IndexedDB (idb-keyval)** for `employee`, `attendance`, `leave`, `payroll` (large data)
+- Every mutating action starts with `useAuthStore().requirePermission('...')`
+
+Full signatures for `useEmployeeStore` and `usePayrollStore` spec'd in implementation session (follows same pattern as § 2).
 
 ---
 
-## Sources
-- Feedback consolidated from 3 specialized agents (Architecture / Scope / Thai Domain)
+## § 11. i18n strategy
+
+- **Per-module namespaces** merged via `registerModuleMessages(ns, th, en)`
+- Primary locale `th`, fallback `en`, dev warnings on missing keys
+- **Intl APIs** (NOT i18n) for formatting:
+  - Dates: `Intl.DateTimeFormat('th-TH-u-ca-buddhist', …)` for BE
+  - Currency: `Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' })` → "฿43,842.50"
+  - Numbers: `Intl.NumberFormat('th-TH')`
+  - Relative time: `Intl.RelativeTimeFormat`
+- Wrapped in `useLocale()` composable
+- **Not translated via i18n** (data, not UI): employee names, department/position names, leave type names, holiday names — stored as dual `nameTh/nameEn` on entity
+
+Expected i18n JSON size: <400 keys total.
+
+---
+
+## § 12. Verification
+
+1. `npm run build` — zero errors
+2. `npm test` — all Vitest tests green
+3. `npm run dev` → demo script:
+   - Login as HR / Manager / Employee in turn → sidebar changes per role
+   - Employee: add → list → edit → detail → delete (full flow)
+   - Clock in → clock out → calendar shows entry
+   - Apply leave → manager approves → balance decreases
+   - Run payroll → view payslip → export PDF (opens in Chrome/Preview)
+   - Switch language → all strings change
+   - Switch theme → dark mode on all pages
+   - Refresh browser → state persists (localStorage + IndexedDB)
+4. **Responsive:** tablet (768px) + desktop (1280px). Mobile <640px is Tier C.
+
+---
+
+## § 13. Risks & mitigations
+
+| Risk | Mitigation |
+|---|---|
+| 13.5 hrs still tight | Tier A+B has ~1 hr slack; cut Tier C first; Tier A is non-negotiable |
+| Tailwind + shadcn-vue setup | v3.4 chosen (stable path); v4 rejected |
+| Thai tax correctness | Vitest pins 6 hand-calculated values; seeded edge cases exercise every bracket |
+| Face / Fingerprint are mocks | Labeled "Demo mode" in UI; GPS is real |
+| PDF Thai rendering | `jspdf` + NotoSansThai base64-bundled; test in Phase 10 (fail fast) |
+| Refresh-test failures | IndexedDB adapter tested in Phase 3 before modules depend on it |
+| Role-switcher desync | Permission check in 3 layers (router + UI + store); DevTools bypass blocked |
+
+---
+
+## § 14. Critical files (write first — de-risks everything)
+
+1. `src/types/employee.ts` — data model for 4+ modules
+2. `src/lib/thai-rules.ts` — payroll correctness
+3. `src/lib/permissions.ts` — RBAC referenced by router/UI/stores
+4. `src/lib/mock-seed.ts` + `seed-data.json` — deterministic demos + test fixtures
+5. `src/modules/payroll/stores/payroll.ts` — most complex store; pattern for others
+
+---
+
+## § 15. Permissions requested
+
+| Ask | Why |
+|---|---|
+| `Bash(npm:*)`, `Bash(npx:*)` | Install, scripts, shadcn-vue CLI |
+| `Bash(mkdir:*)`, `Bash(ls:*)`, `Bash(pwd)` | Basic FS |
+| `Write(*)`, `Edit(*)` inside `/Users/peace/Desktop/work/rws/poc/hrm/**` | Source files |
+| npm registry network | `npm install` |
+
+**Not needed:** git push, deploy, out-of-repo edits, other network.
+
+---
+
+## § 16. Sources
+
 - [HumanSoft](https://www.humansoft.co.th/th)
 - [Bplus HRM](https://www.businessplus.co.th/Product/hrm-payroll-c008)
 - [Prosoft HRMI](https://www.prosofthrmi.com/)
-- [shadcn-vue docs](https://www.shadcn-vue.com/)
+- [shadcn-vue](https://www.shadcn-vue.com/)
 - [Tailwind CSS v3](https://v3.tailwindcss.com/)
-- [Thai Revenue Department](https://www.rd.go.th/)
-- [Thai Labour Protection Act](https://www.mol.go.th/)
+- [Vite](https://vite.dev/)
+- Thai Labour Protection Act §34, §61-63, §118
+- Thai Revenue Code §40, §50 (withholding tax)
+- Social Security Act B.E. 2533
