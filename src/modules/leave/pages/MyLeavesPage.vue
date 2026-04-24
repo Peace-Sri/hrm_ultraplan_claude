@@ -1,11 +1,145 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { Plus, X } from 'lucide-vue-next'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import PageHeader from '@/components/shared/PageHeader.vue'
-import EmptyState from '@/components/shared/EmptyState.vue'
+import { useLeaveStore } from '@/modules/leave/stores/leave'
+import { useAuthStore } from '@/modules/auth/stores/auth'
+import { useAppStore } from '@/stores/app'
+import { useLocale } from '@/composables/useLocale'
+import { toast } from 'vue-sonner'
+import type { ID } from '@/types/common'
+
+const router = useRouter()
+const leave = useLeaveStore()
+const auth = useAuthStore()
+const app = useAppStore()
+const { date: fmtDate } = useLocale()
+
+const myBalances = computed(() =>
+  auth.currentEmployee ? leave.balancesFor(auth.currentEmployee.id) : [],
+)
+const myRequests = computed(() =>
+  auth.currentEmployee
+    ? leave.byEmployee(auth.currentEmployee.id).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))
+    : [],
+)
+
+function getType(key: string) {
+  return leave.types.find((t) => t.key === key)
+}
+
+function remaining(b: { entitledDays: number; usedDays: number; pendingDays: number; carriedOverDays: number }) {
+  return b.entitledDays + b.carriedOverDays - b.usedDays - b.pendingDays
+}
+
+const statusVariant: Record<string, 'default' | 'destructive' | 'secondary' | 'outline'> = {
+  pending: 'outline',
+  approved: 'default',
+  rejected: 'destructive',
+  cancelled: 'secondary',
+  draft: 'secondary',
+}
+
+function onCancel(id: ID<'LVR'>) {
+  try {
+    leave.cancel(id)
+    toast.success('Cancelled')
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : String(err))
+  }
+}
 </script>
 
 <template>
   <div>
-    <PageHeader title="My Leaves" description="Coming in Phase 9" />
-    <EmptyState title="Phase 9 pending" description="Balance cards + history + apply leave." />
+    <PageHeader title="My Leaves">
+      <template #actions>
+        <Button @click="router.push('/leave/apply')">
+          <Plus class="mr-2 h-4 w-4" />
+          Apply Leave
+        </Button>
+      </template>
+    </PageHeader>
+
+    <!-- Balance cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <Card v-for="b in myBalances" :key="b.leaveTypeKey">
+        <CardContent class="pt-4 pb-3">
+          <div
+            class="text-xs font-medium mb-1"
+            :style="{ color: getType(b.leaveTypeKey)?.colorHex }"
+          >
+            {{ app.locale === 'th' ? getType(b.leaveTypeKey)?.nameTh : getType(b.leaveTypeKey)?.nameEn }}
+          </div>
+          <div class="text-2xl font-bold">{{ remaining(b) }}</div>
+          <div class="text-xs text-muted-foreground">
+            / {{ b.entitledDays }} days
+            <span v-if="b.pendingDays > 0" class="text-orange-600">(+{{ b.pendingDays }} pending)</span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+
+    <Card>
+      <CardHeader>
+        <CardTitle>Leave History</CardTitle>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Type</TableHead>
+              <TableHead>Dates</TableHead>
+              <TableHead>Days</TableHead>
+              <TableHead>Reason</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow v-for="r in myRequests" :key="r.id">
+              <TableCell>
+                <Badge :style="{ backgroundColor: getType(r.leaveTypeKey)?.colorHex, color: 'white' }">
+                  {{ app.locale === 'th' ? getType(r.leaveTypeKey)?.nameTh : getType(r.leaveTypeKey)?.nameEn }}
+                </Badge>
+              </TableCell>
+              <TableCell>{{ fmtDate(r.startDate) }} – {{ fmtDate(r.endDate) }}</TableCell>
+              <TableCell>{{ r.totalDays }}</TableCell>
+              <TableCell class="max-w-xs truncate">{{ r.reason }}</TableCell>
+              <TableCell>
+                <Badge :variant="statusVariant[r.status]">{{ r.status }}</Badge>
+              </TableCell>
+              <TableCell>
+                <Button
+                  v-if="r.status === 'pending'"
+                  size="sm"
+                  variant="ghost"
+                  @click="onCancel(r.id)"
+                >
+                  <X class="h-4 w-4" />
+                </Button>
+              </TableCell>
+            </TableRow>
+            <TableRow v-if="myRequests.length === 0">
+              <TableCell colspan="6" class="text-center py-8 text-muted-foreground">
+                No leave requests yet.
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   </div>
 </template>

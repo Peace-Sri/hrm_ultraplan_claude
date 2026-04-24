@@ -2,10 +2,14 @@ import seedrandom from 'seedrandom'
 import type { Department, Position } from '@/types/org'
 import type { Employee } from '@/types/employee'
 import type { Shift } from '@/types/shift'
-import type { LeaveType } from '@/types/leave'
+import type { LeaveType, LeaveRequest, LeaveBalance } from '@/types/leave'
+import type { AttendanceRecord } from '@/types/attendance'
 import type { User } from '@/types/user'
+import type { Payslip } from '@/types/payroll'
 import { toSatang } from '@/types/common'
 import { generateValidThaiID } from './thai-id'
+import { isHoliday } from './thai-holidays'
+import { calculatePayslip, LEAVE_ENTITLEMENT_DAYS } from './thai-rules'
 import {
   THAI_MALE_FIRST_NAMES,
   THAI_FEMALE_FIRST_NAMES,
@@ -277,6 +281,205 @@ export function buildEmployees(count = 60): Employee[] {
     emps.push(buildOneEmployee(i, { managerId }))
   }
   return emps
+}
+
+// ═══ ATTENDANCE HISTORY ═══
+export function buildAttendance(employees: Employee[], daysBack = 30): AttendanceRecord[] {
+  const records: AttendanceRecord[] = []
+  const today = new Date('2026-04-24T00:00:00+07:00')
+  for (let d = daysBack; d >= 0; d--) {
+    const date = new Date(today.getTime() - d * 86400000)
+    const iso = date.toISOString().slice(0, 10)
+    const dow = date.getDay()
+    const isWeekend = dow === 0 || dow === 6
+    const isHol = isHoliday(iso)
+
+    for (const emp of employees) {
+      // 5% absent, 10% late, 3% on leave, rest present
+      const roll = RNG()
+      let status: AttendanceRecord['status'] = 'present'
+      let lateMinutes = 0
+      let workedMinutes = 480
+      let otWeekdayMinutes = 0
+      const otHolidayRegMinutes = 0
+      const otHolidayExtraMinutes = 0
+      let clockInAt: string | undefined
+      let clockOutAt: string | undefined
+      let clockInMethod: AttendanceRecord['clockInMethod']
+
+      if (isWeekend) {
+        status = 'weekend'
+      } else if (isHol) {
+        status = 'holiday'
+      } else if (roll < 0.03) {
+        status = 'leave'
+      } else if (roll < 0.08) {
+        status = 'absent'
+      } else {
+        const shiftStart = new Date(date)
+        shiftStart.setHours(8, 30, 0, 0)
+        if (roll < 0.18) {
+          // late
+          lateMinutes = rand(5, 45)
+          status = lateMinutes > 15 ? 'late' : 'present'
+          shiftStart.setMinutes(shiftStart.getMinutes() + lateMinutes)
+        }
+        clockInAt = shiftStart.toISOString()
+        clockInMethod = pick(['gps', 'wifi', 'fingerprint_mock'] as const)
+
+        const shiftEnd = new Date(shiftStart)
+        shiftEnd.setHours(17, rand(20, 55), 0, 0)
+        const otMin = Math.max(0, (shiftEnd.getTime() - (shiftStart.getTime() + 9 * 3600000)) / 60000)
+        otWeekdayMinutes = Math.floor(otMin)
+        clockOutAt = shiftEnd.toISOString()
+        workedMinutes = Math.floor((shiftEnd.getTime() - shiftStart.getTime()) / 60000) - 60
+      }
+
+      records.push({
+        id: `ATT-${iso}-${emp.id}` as AttendanceRecord['id'],
+        employeeId: emp.id,
+        date: iso,
+        shiftId: 'SFT-DAY',
+        clockInAt,
+        clockInMethod,
+        clockOutAt,
+        clockOutMethod: clockInMethod,
+        status,
+        lateMinutes,
+        workedMinutes,
+        otWeekdayMinutes,
+        otHolidayRegMinutes,
+        otHolidayExtraMinutes,
+      })
+    }
+  }
+  return records
+}
+
+// ═══ LEAVE REQUESTS ═══
+export function buildLeaveRequests(employees: Employee[]): LeaveRequest[] {
+  const leaves: LeaveRequest[] = []
+  // Generate some historical and pending leaves
+  const types = ['sick', 'personal', 'vacation'] as const
+  const today = new Date('2026-04-24T00:00:00+07:00')
+  let counter = 1
+  for (const emp of employees) {
+    const numLeaves = rand(0, 4)
+    for (let i = 0; i < numLeaves; i++) {
+      const daysAgo = rand(-30, 90) // some future, some past
+      const start = new Date(today.getTime() - daysAgo * 86400000)
+      const duration = rand(1, 3)
+      const end = new Date(start.getTime() + (duration - 1) * 86400000)
+      const type = pick(types)
+      const isPast = daysAgo > 0
+      const status: LeaveRequest['status'] = isPast
+        ? pick(['approved', 'approved', 'rejected'] as const)
+        : pick(['pending', 'pending', 'approved'] as const)
+
+      leaves.push({
+        id: `LVR-2026-${String(counter++).padStart(5, '0')}` as LeaveRequest['id'],
+        employeeId: emp.id,
+        leaveTypeKey: type,
+        startDate: start.toISOString().slice(0, 10),
+        endDate: end.toISOString().slice(0, 10),
+        totalDays: duration,
+        isHalfDay: false,
+        reason: pick([
+          'ไม่สบาย',
+          'ธุระครอบครัว',
+          'พักผ่อนกับครอบครัว',
+          'ธุระส่วนตัว',
+          'ไปพบหมอ',
+        ]),
+        status,
+        submittedAt: new Date(start.getTime() - 2 * 86400000).toISOString(),
+        reviewedAt: status !== 'pending' ? new Date(start.getTime() - 1 * 86400000).toISOString() : undefined,
+        reviewedBy: status !== 'pending' ? emp.managerId : undefined,
+      })
+    }
+  }
+  return leaves
+}
+
+// ═══ LEAVE BALANCES ═══
+export function buildLeaveBalances(employees: Employee[]): LeaveBalance[] {
+  const balances: LeaveBalance[] = []
+  const year = 2026
+  for (const emp of employees) {
+    for (const [key, days] of Object.entries(LEAVE_ENTITLEMENT_DAYS)) {
+      if (key === 'unpaid') continue
+      balances.push({
+        employeeId: emp.id,
+        year,
+        leaveTypeKey: key as keyof typeof LEAVE_ENTITLEMENT_DAYS,
+        entitledDays: days,
+        usedDays: rand(0, Math.min(days / 2, 5)),
+        pendingDays: 0,
+        carriedOverDays: 0,
+      })
+    }
+  }
+  return balances
+}
+
+// ═══ PAYSLIPS (3 months history) ═══
+export function buildPayslips(
+  employees: Employee[],
+  attendance: AttendanceRecord[],
+): Payslip[] {
+  const payslips: Payslip[] = []
+  const now = new Date('2026-04-24T00:00:00+07:00').toISOString()
+  for (const month of [2, 3, 4]) {
+    const period = `2026-${String(month).padStart(2, '0')}-01`
+    for (const emp of employees) {
+      const monthAttendance = attendance.filter(
+        (a) => a.employeeId === emp.id && a.date.startsWith(`2026-${String(month).padStart(2, '0')}`),
+      )
+      const otWeekdayMin = monthAttendance.reduce((s, a) => s + a.otWeekdayMinutes, 0)
+      const calc = calculatePayslip({
+        employee: emp,
+        year: 2026,
+        month,
+        otWeekdayMin,
+        otHolidayRegMin: 0,
+        otHolidayExtraMin: 0,
+        unpaidDays: 0,
+      })
+      payslips.push({
+        id: `PAY-2026-${String(month).padStart(2, '0')}-${emp.id}` as Payslip['id'],
+        employeeId: emp.id,
+        payrollRunId: `RUN-2026-${String(month).padStart(2, '0')}` as Payslip['payrollRunId'],
+        period,
+        year: 2026,
+        month,
+        workingDaysInMonth: calc.workingDays,
+        paidDays: calc.workingDays,
+        unpaidLeaveDays: 0,
+        earnings: {
+          baseSalary: calc.earnings.baseSalary,
+          monthlyAllowances: calc.earnings.monthlyAllowances,
+          otWeekday: calc.earnings.otWeekday,
+          otHolidayReg: calc.earnings.otHolidayReg,
+          otHolidayExtra: calc.earnings.otHolidayExtra,
+          bonus: calc.earnings.bonus,
+          otherEarnings: 0,
+          total: calc.earnings.total,
+        },
+        deductions: {
+          sso: calc.deductions.sso,
+          pvd: calc.deductions.pvd,
+          withholdingTax: calc.deductions.tax,
+          absence: calc.deductions.absence,
+          loan: 0,
+          other: 0,
+          total: calc.deductions.total,
+        },
+        netPay: calc.netPay,
+        issuedAt: now,
+      })
+    }
+  }
+  return payslips
 }
 
 // ═══ USERS (for quick-login) ═══
