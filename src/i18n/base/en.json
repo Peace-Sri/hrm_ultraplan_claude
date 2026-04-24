@@ -1,0 +1,74 @@
+{
+  "app": {
+    "name": "HRM POC",
+    "tagline": "Human Resource Management System"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "confirm": "Confirm",
+    "submit": "Submit",
+    "approve": "Approve",
+    "reject": "Reject",
+    "back": "Back",
+    "next": "Next",
+    "loading": "Loading...",
+    "empty": "No data",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "success": "Success",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "actions": "Actions"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "employees": "Employees",
+    "attendance": "Attendance",
+    "leave": "Leave",
+    "payroll": "Payroll",
+    "approvals": "Approvals",
+    "ess": "Self-Service",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "auth": {
+    "title": "Sign in to HRM POC",
+    "subtitle": "Pick a demo persona or enter credentials below",
+    "username": "Username",
+    "password": "Password",
+    "login": "Sign in",
+    "quickLogin": "Quick Login",
+    "hr": "HR Admin",
+    "manager": "Manager",
+    "employee": "Employee",
+    "invalid": "Invalid username or password"
+  },
+  "role": {
+    "hr_admin": "HR Admin",
+    "manager": "Manager",
+    "employee": "Employee"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "settings": {
+    "language": "Language",
+    "theme": "Theme",
+    "dateSystem": "Calendar",
+    "profile": "Profile"
+  },
+  "dateSystem": {
+    "CE": "CE",
+    "BE": "BE (พ.ศ.)"
+  }
+}

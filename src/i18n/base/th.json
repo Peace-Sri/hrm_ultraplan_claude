@@ -1,0 +1,74 @@
+{
+  "app": {
+    "name": "HRM POC",
+    "tagline": "ระบบบริหารทรัพยากรบุคคล"
+  },
+  "common": {
+    "save": "บันทึก",
+    "cancel": "ยกเลิก",
+    "delete": "ลบ",
+    "edit": "แก้ไข",
+    "add": "เพิ่ม",
+    "search": "ค้นหา",
+    "filter": "กรอง",
+    "export": "ส่งออก",
+    "confirm": "ยืนยัน",
+    "submit": "ส่ง",
+    "approve": "อนุมัติ",
+    "reject": "ปฏิเสธ",
+    "back": "ย้อนกลับ",
+    "next": "ถัดไป",
+    "loading": "กำลังโหลด...",
+    "empty": "ไม่มีข้อมูล",
+    "error": "เกิดข้อผิดพลาด",
+    "retry": "ลองใหม่",
+    "success": "สำเร็จ",
+    "yes": "ใช่",
+    "no": "ไม่",
+    "all": "ทั้งหมด",
+    "actions": "การกระทำ"
+  },
+  "nav": {
+    "dashboard": "แดชบอร์ด",
+    "employees": "พนักงาน",
+    "attendance": "ลงเวลา",
+    "leave": "ลางาน",
+    "payroll": "เงินเดือน",
+    "approvals": "อนุมัติ",
+    "ess": "บริการพนักงาน",
+    "settings": "ตั้งค่า",
+    "logout": "ออกจากระบบ"
+  },
+  "auth": {
+    "title": "เข้าสู่ระบบ HRM POC",
+    "subtitle": "เลือก persona เพื่อทดสอบหรือกรอกข้อมูลด้านล่าง",
+    "username": "ชื่อผู้ใช้",
+    "password": "รหัสผ่าน",
+    "login": "เข้าสู่ระบบ",
+    "quickLogin": "Quick Login",
+    "hr": "HR Admin",
+    "manager": "หัวหน้า",
+    "employee": "พนักงาน",
+    "invalid": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"
+  },
+  "role": {
+    "hr_admin": "แอดมิน HR",
+    "manager": "หัวหน้าทีม",
+    "employee": "พนักงาน"
+  },
+  "theme": {
+    "light": "สว่าง",
+    "dark": "มืด",
+    "system": "ตามระบบ"
+  },
+  "settings": {
+    "language": "ภาษา",
+    "theme": "ธีม",
+    "dateSystem": "ระบบปี",
+    "profile": "โปรไฟล์"
+  },
+  "dateSystem": {
+    "CE": "ค.ศ.",
+    "BE": "พ.ศ."
+  }
+}
