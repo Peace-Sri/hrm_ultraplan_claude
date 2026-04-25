@@ -156,6 +156,25 @@ function buildOneEmployee(i: number, override?: Partial<Employee>): Employee {
       rmf: 0,
       ssf: 0,
     },
+    onboarding: {
+      documents: {
+        idCardCopy: true,
+        houseRegCopy: true,
+        educationCert: RNG() > 0.2,
+        photo: true,
+        medicalCert: RNG() > 0.3,
+        drivingLicense: RNG() > 0.5,
+        bankBookCopy: true,
+      },
+      checklist: {
+        contractSigned: true,
+        safetyTraining: RNG() > 0.15,
+        itSetup: true,
+        pvdEnrolled: true,
+        ssoEnrolled: true,
+        bankAccountSetup: true,
+      },
+    },
     createdAt: now,
     updatedAt: now,
     ...override,
@@ -258,6 +277,51 @@ export function buildEmployees(count = 60): Employee[] {
       baseSalary: toSatang(35000),
       monthlyAllowances: toSatang(2000),
       pvdRate: 0.05,
+      onboarding: {
+        emergencyContact: {
+          name: 'สมหญิง ใจดี',
+          relationship: 'ภรรยา',
+          phone: '081-2345678',
+        },
+        education: {
+          level: 'bachelor',
+          institution: 'จุฬาลงกรณ์มหาวิทยาลัย',
+          field: 'วิทยาการคอมพิวเตอร์',
+          graduationYear: 2018,
+        },
+        previousEmployers: [
+          {
+            company: 'บริษัท เอบีซี เทคโนโลยี จำกัด',
+            position: 'Junior Developer',
+            startDate: '2018-06-01',
+            endDate: '2021-12-31',
+          },
+        ],
+        documents: {
+          idCardCopy: true,
+          houseRegCopy: true,
+          educationCert: true,
+          photo: true,
+          medicalCert: true,
+          drivingLicense: true,
+          bankBookCopy: true,
+        },
+        equipment: {
+          laptop: 'MacBook Pro 14" M3 (SN: ACME-LP-00042)',
+          badge: 'BDG-00042',
+          phone: 'iPhone 14 (Company)',
+          other: ['Charger', 'External Monitor 27"'],
+        },
+        checklist: {
+          contractSigned: true,
+          safetyTraining: true,
+          itSetup: true,
+          pvdEnrolled: true,
+          ssoEnrolled: true,
+          bankAccountSetup: true,
+        },
+        notes: 'พนักงานต้นแบบสำหรับ demo — ข้อมูลครบทุก field',
+      },
     }),
   )
   emps.push(

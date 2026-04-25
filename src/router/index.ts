@@ -85,9 +85,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'leave/apply',
-        name: 'leave.apply',
-        component: () => import('@/modules/leave/pages/ApplyLeavePage.vue'),
-        meta: { title: 'Apply Leave', requiresPermission: 'leave.apply_self' },
+        redirect: '/leave/my?apply=1',
       },
       {
         path: 'leave/approvals',

@@ -126,7 +126,7 @@ const recentActivity = computed(() => {
 
 const quickActions = computed(() => [
   { label: t('dashboard.clockInOut'), icon: LogIn, to: '/attendance' },
-  { label: t('dashboard.applyLeave'), icon: Plane, to: '/leave/apply' },
+  { label: t('dashboard.applyLeave'), icon: Plane, to: '/leave/my?apply=1' },
   { label: t('dashboard.myPayslip'), icon: FileText, to: '/payroll/my' },
 ])
 </script>

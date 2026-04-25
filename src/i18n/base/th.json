@@ -143,7 +143,62 @@
       "personal": "ข้อมูลส่วนตัว",
       "work": "งาน",
       "compensation": "เงินเดือน/สวัสดิการ",
-      "history": "ประวัติ"
+      "history": "ประวัติ",
+      "onboarding": "เริ่มงาน"
+    },
+    "onboarding": {
+      "title": "ข้อมูลเริ่มงาน",
+      "noData": "ยังไม่มีข้อมูลเริ่มงาน",
+      "emergencyContact": "ผู้ติดต่อกรณีฉุกเฉิน",
+      "name": "ชื่อ",
+      "relationship": "ความสัมพันธ์",
+      "phone": "เบอร์โทร",
+      "education": "การศึกษา",
+      "level": "ระดับ",
+      "institution": "สถาบัน",
+      "field": "สาขา",
+      "graduationYear": "ปีที่จบ",
+      "previousEmployers": "นายจ้างเก่า",
+      "company": "บริษัท",
+      "position": "ตำแหน่ง",
+      "period": "ช่วงเวลา",
+      "documents": "เอกสารที่ส่ง",
+      "docs": {
+        "idCardCopy": "สำเนาบัตรประชาชน",
+        "houseRegCopy": "สำเนาทะเบียนบ้าน",
+        "educationCert": "สำเนาวุฒิการศึกษา",
+        "photo": "รูปถ่าย",
+        "medicalCert": "ใบรับรองแพทย์",
+        "drivingLicense": "สำเนาใบขับขี่",
+        "bankBookCopy": "สำเนาหน้าสมุดบัญชี"
+      },
+      "equipment": "อุปกรณ์ที่จัดสรร",
+      "laptop": "Laptop",
+      "badge": "บัตรพนักงาน",
+      "phoneEquip": "โทรศัพท์",
+      "otherEquip": "อื่นๆ",
+      "checklist": "Checklist เริ่มงาน",
+      "check": {
+        "contractSigned": "ลงนามสัญญาจ้าง",
+        "safetyTraining": "อบรมความปลอดภัย",
+        "itSetup": "IT setup (Email, ระบบ)",
+        "pvdEnrolled": "ลงทะเบียนกองทุนสำรองเลี้ยงชีพ",
+        "ssoEnrolled": "ลงทะเบียนประกันสังคม",
+        "bankAccountSetup": "เปิดบัญชีรับเงินเดือน"
+      },
+      "notes": "หมายเหตุ",
+      "received": "ส่งแล้ว",
+      "pending": "รอ",
+      "completed": "เสร็จแล้ว",
+      "incomplete": "ยังไม่เสร็จ"
+    },
+    "edu": {
+      "primary": "ประถมศึกษา",
+      "secondary": "มัธยมศึกษา",
+      "vocational": "อาชีวศึกษา",
+      "bachelor": "ปริญญาตรี",
+      "master": "ปริญญาโท",
+      "doctorate": "ปริญญาเอก"
     },
     "fields": {
       "titleTh": "คำนำหน้า (ไทย)",

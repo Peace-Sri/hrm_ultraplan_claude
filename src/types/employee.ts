@@ -18,6 +18,70 @@ export interface ForeignDocuments {
   entryDate?: string // ISODate เข้าประเทศ
 }
 
+export type EducationLevel =
+  | 'primary'
+  | 'secondary'
+  | 'vocational'
+  | 'bachelor'
+  | 'master'
+  | 'doctorate'
+
+export interface EmergencyContact {
+  name: string
+  relationship: string // ภรรยา/สามี/บิดา/มารดา/พี่/น้อง/เพื่อน
+  phone: string
+}
+
+export interface Education {
+  level: EducationLevel
+  institution: string
+  field?: string
+  graduationYear?: number
+}
+
+export interface PreviousEmployer {
+  company: string
+  position: string
+  startDate: string // ISODate
+  endDate: string // ISODate
+}
+
+export interface OnboardingDocs {
+  idCardCopy: boolean // สำเนาบัตรประชาชน
+  houseRegCopy: boolean // สำเนาทะเบียนบ้าน
+  educationCert: boolean // สำเนาวุฒิการศึกษา
+  photo: boolean // รูปถ่าย
+  medicalCert: boolean // ใบรับรองแพทย์
+  drivingLicense: boolean // ใบขับขี่
+  bankBookCopy: boolean // สำเนาหน้าสมุดบัญชี
+}
+
+export interface Equipment {
+  laptop?: string // model / serial
+  badge?: string // เลขบัตรพนักงาน
+  phone?: string
+  other?: string[]
+}
+
+export interface OnboardingChecklist {
+  contractSigned: boolean // ลงนามสัญญาจ้าง
+  safetyTraining: boolean // อบรมความปลอดภัย
+  itSetup: boolean // IT setup (email, system access)
+  pvdEnrolled: boolean // ลงทะเบียนกองทุนสำรองเลี้ยงชีพ
+  ssoEnrolled: boolean // ลงทะเบียนประกันสังคม
+  bankAccountSetup: boolean // เปิดบัญชีรับเงินเดือน
+}
+
+export interface OnboardingInfo {
+  emergencyContact?: EmergencyContact
+  education?: Education
+  previousEmployers?: PreviousEmployer[]
+  documents: OnboardingDocs
+  equipment?: Equipment
+  checklist: OnboardingChecklist
+  notes?: string
+}
+
 export interface Address {
   addressLine: string
   tambon: string
@@ -71,6 +135,7 @@ export interface Employee {
   bankCode: BankCode
   bankAccount: string
   taxAllowances: TaxAllowances
+  onboarding?: OnboardingInfo
   photoUrl?: string
   createdAt: ISODateTime
   updatedAt: ISODateTime

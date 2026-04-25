@@ -143,7 +143,62 @@
       "personal": "Personal",
       "work": "Work",
       "compensation": "Compensation",
-      "history": "History"
+      "history": "History",
+      "onboarding": "Onboarding"
+    },
+    "onboarding": {
+      "title": "Onboarding Information",
+      "noData": "No onboarding data yet",
+      "emergencyContact": "Emergency Contact",
+      "name": "Name",
+      "relationship": "Relationship",
+      "phone": "Phone",
+      "education": "Education",
+      "level": "Level",
+      "institution": "Institution",
+      "field": "Field of Study",
+      "graduationYear": "Graduation Year",
+      "previousEmployers": "Previous Employers",
+      "company": "Company",
+      "position": "Position",
+      "period": "Period",
+      "documents": "Documents Received",
+      "docs": {
+        "idCardCopy": "ID Card Copy",
+        "houseRegCopy": "House Registration Copy",
+        "educationCert": "Education Certificate",
+        "photo": "Photo",
+        "medicalCert": "Medical Certificate",
+        "drivingLicense": "Driving License",
+        "bankBookCopy": "Bank Book Copy"
+      },
+      "equipment": "Equipment Issued",
+      "laptop": "Laptop",
+      "badge": "Employee Badge",
+      "phoneEquip": "Phone",
+      "otherEquip": "Other",
+      "checklist": "Onboarding Checklist",
+      "check": {
+        "contractSigned": "Contract Signed",
+        "safetyTraining": "Safety Training",
+        "itSetup": "IT Setup (Email, system access)",
+        "pvdEnrolled": "Provident Fund Enrolled",
+        "ssoEnrolled": "Social Security Enrolled",
+        "bankAccountSetup": "Payroll Bank Account Setup"
+      },
+      "notes": "Notes",
+      "received": "Received",
+      "pending": "Pending",
+      "completed": "Completed",
+      "incomplete": "Incomplete"
+    },
+    "edu": {
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "vocational": "Vocational",
+      "bachelor": "Bachelor's",
+      "master": "Master's",
+      "doctorate": "Doctorate"
     },
     "fields": {
       "titleTh": "Title (TH)",

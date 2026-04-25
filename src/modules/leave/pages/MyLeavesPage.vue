@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { Plus, X } from 'lucide-vue-next'
+import LeaveApplyDialog from '@/modules/leave/components/LeaveApplyDialog.vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -23,8 +24,13 @@ import { toast } from 'vue-sonner'
 import type { ID } from '@/types/common'
 
 const { t } = useI18n()
-const router = useRouter()
+const route = useRoute()
 const leave = useLeaveStore()
+const applyOpen = ref(false)
+
+onMounted(() => {
+  if (route.query.apply === '1') applyOpen.value = true
+})
 const auth = useAuthStore()
 const app = useAppStore()
 const { date: fmtDate } = useLocale()
@@ -68,12 +74,14 @@ function onCancel(id: ID<'LVR'>) {
   <div>
     <PageHeader :title="t('leave.myLeaves')">
       <template #actions>
-        <Button @click="router.push('/leave/apply')">
+        <Button @click="applyOpen = true">
           <Plus class="mr-2 h-4 w-4" />
           {{ t('leave.apply') }}
         </Button>
       </template>
     </PageHeader>
+
+    <LeaveApplyDialog v-model:open="applyOpen" />
 
     <!-- Balance cards -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">

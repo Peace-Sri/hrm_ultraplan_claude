@@ -166,6 +166,7 @@ function expiryClass(dateStr: string): string {
         <TabsTrigger value="personal">{{ t('employee.tabs.personal') }}</TabsTrigger>
         <TabsTrigger value="work">{{ t('employee.tabs.work') }}</TabsTrigger>
         <TabsTrigger value="compensation">{{ t('employee.tabs.compensation') }}</TabsTrigger>
+        <TabsTrigger value="onboarding">{{ t('employee.tabs.onboarding') }}</TabsTrigger>
         <TabsTrigger value="history">{{ t('employee.tabs.history') }}</TabsTrigger>
       </TabsList>
 
@@ -239,6 +240,156 @@ function expiryClass(dateStr: string): string {
             <div><div class="text-xs text-muted-foreground flex items-center gap-1"><CreditCard class="h-3 w-3" />{{ t('employee.fields.bank') }}</div><div>{{ emp.bankCode }} — {{ emp.bankAccount }}</div></div>
           </CardContent>
         </Card>
+      </TabsContent>
+
+      <TabsContent value="onboarding">
+        <div v-if="!emp.onboarding">
+          <Card>
+            <CardContent class="pt-6">
+              <EmptyState :title="t('employee.onboarding.noData')" />
+            </CardContent>
+          </Card>
+        </div>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Emergency Contact -->
+          <Card v-if="emp.onboarding.emergencyContact">
+            <CardHeader>
+              <CardTitle class="text-base">{{ t('employee.onboarding.emergencyContact') }}</CardTitle>
+            </CardHeader>
+            <CardContent class="space-y-2 text-sm">
+              <div class="grid grid-cols-3 gap-1">
+                <span class="text-muted-foreground">{{ t('employee.onboarding.name') }}</span>
+                <span class="col-span-2">{{ emp.onboarding.emergencyContact.name }}</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1">
+                <span class="text-muted-foreground">{{ t('employee.onboarding.relationship') }}</span>
+                <span class="col-span-2">{{ emp.onboarding.emergencyContact.relationship }}</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1">
+                <span class="text-muted-foreground">{{ t('employee.onboarding.phone') }}</span>
+                <span class="col-span-2 font-mono">{{ emp.onboarding.emergencyContact.phone }}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- Education -->
+          <Card v-if="emp.onboarding.education">
+            <CardHeader>
+              <CardTitle class="text-base">{{ t('employee.onboarding.education') }}</CardTitle>
+            </CardHeader>
+            <CardContent class="space-y-2 text-sm">
+              <div class="grid grid-cols-3 gap-1">
+                <span class="text-muted-foreground">{{ t('employee.onboarding.level') }}</span>
+                <span class="col-span-2">{{ t(`employee.edu.${emp.onboarding.education.level}`) }}</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1">
+                <span class="text-muted-foreground">{{ t('employee.onboarding.institution') }}</span>
+                <span class="col-span-2">{{ emp.onboarding.education.institution }}</span>
+              </div>
+              <div v-if="emp.onboarding.education.field" class="grid grid-cols-3 gap-1">
+                <span class="text-muted-foreground">{{ t('employee.onboarding.field') }}</span>
+                <span class="col-span-2">{{ emp.onboarding.education.field }}</span>
+              </div>
+              <div v-if="emp.onboarding.education.graduationYear" class="grid grid-cols-3 gap-1">
+                <span class="text-muted-foreground">{{ t('employee.onboarding.graduationYear') }}</span>
+                <span class="col-span-2">{{ emp.onboarding.education.graduationYear }}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- Documents -->
+          <Card class="md:col-span-2">
+            <CardHeader>
+              <CardTitle class="text-base">{{ t('employee.onboarding.documents') }}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div
+                  v-for="(received, key) in emp.onboarding.documents"
+                  :key="key"
+                  class="flex items-center justify-between p-2 rounded-md border text-sm"
+                >
+                  <span>{{ t(`employee.onboarding.docs.${key}`) }}</span>
+                  <Badge :variant="received ? 'default' : 'secondary'">
+                    {{ received ? '✓' : '—' }}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- Equipment -->
+          <Card v-if="emp.onboarding.equipment">
+            <CardHeader>
+              <CardTitle class="text-base">{{ t('employee.onboarding.equipment') }}</CardTitle>
+            </CardHeader>
+            <CardContent class="space-y-2 text-sm">
+              <div v-if="emp.onboarding.equipment.laptop" class="grid grid-cols-3 gap-1">
+                <span class="text-muted-foreground">{{ t('employee.onboarding.laptop') }}</span>
+                <span class="col-span-2 font-mono text-xs">{{ emp.onboarding.equipment.laptop }}</span>
+              </div>
+              <div v-if="emp.onboarding.equipment.badge" class="grid grid-cols-3 gap-1">
+                <span class="text-muted-foreground">{{ t('employee.onboarding.badge') }}</span>
+                <span class="col-span-2 font-mono">{{ emp.onboarding.equipment.badge }}</span>
+              </div>
+              <div v-if="emp.onboarding.equipment.phone" class="grid grid-cols-3 gap-1">
+                <span class="text-muted-foreground">{{ t('employee.onboarding.phoneEquip') }}</span>
+                <span class="col-span-2">{{ emp.onboarding.equipment.phone }}</span>
+              </div>
+              <div v-if="emp.onboarding.equipment.other?.length" class="grid grid-cols-3 gap-1">
+                <span class="text-muted-foreground">{{ t('employee.onboarding.otherEquip') }}</span>
+                <span class="col-span-2">{{ emp.onboarding.equipment.other.join(', ') }}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- Checklist -->
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-base">{{ t('employee.onboarding.checklist') }}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul class="space-y-1.5 text-sm">
+                <li
+                  v-for="(done, key) in emp.onboarding.checklist"
+                  :key="key"
+                  class="flex items-center justify-between"
+                >
+                  <span>{{ t(`employee.onboarding.check.${key}`) }}</span>
+                  <Badge :variant="done ? 'default' : 'outline'">
+                    {{ done ? '✓' : '○' }}
+                  </Badge>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <!-- Previous Employers -->
+          <Card v-if="emp.onboarding.previousEmployers?.length" class="md:col-span-2">
+            <CardHeader>
+              <CardTitle class="text-base">{{ t('employee.onboarding.previousEmployers') }}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul class="space-y-3">
+                <li v-for="(prev, idx) in emp.onboarding.previousEmployers" :key="idx" class="text-sm border-l-2 pl-3">
+                  <div class="font-medium">{{ prev.company }}</div>
+                  <div class="text-muted-foreground">{{ prev.position }}</div>
+                  <div class="text-xs text-muted-foreground">
+                    {{ date(prev.startDate) }} – {{ date(prev.endDate) }}
+                  </div>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <!-- Notes -->
+          <Card v-if="emp.onboarding.notes" class="md:col-span-2">
+            <CardHeader>
+              <CardTitle class="text-base">{{ t('employee.onboarding.notes') }}</CardTitle>
+            </CardHeader>
+            <CardContent class="text-sm">{{ emp.onboarding.notes }}</CardContent>
+          </Card>
+        </div>
       </TabsContent>
 
       <TabsContent value="history">
